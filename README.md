@@ -1,17 +1,27 @@
-# App de Análisis Financiero
+# 📊 Aplicación de Análisis de Riesgo e Inversión
 
-Esta app permite analizar datos históricos de acciones directamente desde Yahoo Finance, calculando rendimientos anualizados, volatilidad y mostrando gráficas interactivas.
+Esta es una aplicación web interactiva desarrollada en **Python** con **Streamlit** que permite evaluar el perfil de riesgo de un inversionista a través de un cuestionario completo, conectarse con **Claude AI** para procesar las respuestas y recomendar uno de 9 portafolios de inversión. Además, muestra en tiempo real los precios y distribución de activos financieros usando datos de **Yahoo Finance**.
 
-## Cómo usar
+## 🛠️ Tecnologías Utilizadas
+- [Streamlit](https://streamlit.io/) (interfaz web)
+- [yfinance](https://pypi.org/project/yfinance/) (datos financieros)
+- [pandas](https://pandas.pydata.org/) (análisis de datos)
+- [plotly](https://plotly.com/python/) (gráficos interactivos)
+- [httpx](https://www.python-httpx.org/) (requests asíncronos para Claude AI)
 
-1. Ingresa un ticker válido (ej. AAPL).
-2. Selecciona el rango de fechas.
-3. Visualiza datos fundamentales, precios históricos, CAGR y volatilidad.
+## 🚀 Funcionalidades
+- 📄 **Cuestionario completo de perfil de riesgo** (7 secciones, 50+ preguntas)
+- 🤖 **Conexión con Claude AI** vía API para analizar respuestas y sugerir portafolios
+- 📈 **Visualización en tiempo real de precios** (Apple, Tesla, Microsoft)
+- 🥧 **Gráfica de distribución del portafolio** en formato circular
+- 💰 **Cálculo de inversión, cantidades y % ganancia/pérdida**
 
-## Publicación
+## 🔑 Requisitos
+1. Python 3.10+
+2. Librerías necesarias:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-Este proyecto fue desarrollado para el examen final de Ingenieria Financiera
+## 📄 Estructura del Proyecto
 
-Desarrollado por: Iker Ripoll Solana  
-ID: 0243449
-Desarollado el Dia: 10/04/2025

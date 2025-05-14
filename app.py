@@ -21,7 +21,7 @@ st.markdown("""
 st.title("💼 Asesor de Inversión Personalizado")
 
 # --- API KEY y PROMPT COMPLETO PARA CLAUDE ---
-API_KEY = "CLAUDE_API_KEY"
+API_KEY = "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"
 
 
 PROMPT_CLAUDE = """
