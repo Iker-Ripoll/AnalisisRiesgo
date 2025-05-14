@@ -21,7 +21,7 @@ st.markdown("""
 st.title("💼 Asesor de Inversión Personalizado")
 
 # --- API KEY y PROMPT COMPLETO PARA CLAUDE ---
-API_KEY = "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"
+API_KEY = "CLAUDE_API_KEY"
 
 
 PROMPT_CLAUDE = """
@@ -248,55 +248,86 @@ async def analizar_con_claude(respuestas):
         return r.json()["content"]
 
 # --- INICIO DEL FORMULARIO ---
+# --- FORMULARIO DE PERFIL DE RIESGO COMPLETO ---
 respuestas = {}
+
 with st.form("formulario_perfil"):
-    st.subheader("📝 Cuestionario de Perfil de Riesgo")
+    st.subheader("📝 Cuestionario de Perfil de Riesgo e Inversión")
 
-    # SECCIÓN 1
+    # --- SECCIÓN 1: Datos Personales y Situación Financiera ---
     with st.expander("1. Datos Personales y Situación Financiera"):
-        respuestas["Edad"] = st.radio("Edad", [
-            "Menor de 25 años", "Entre 26 y 35 años", "Entre 36 y 45 años", "Entre 46 y 55 años", "Entre 56 y 65 años", "Mayor de 65 años"])
-        respuestas["Situación laboral"] = st.radio("¿Cuál es su situación laboral actual?", [
-            "Empleado tiempo completo", "Empleado tiempo parcial", "Empresario/Autónomo", "Jubilado", "Sin empleo actual"])
-        respuestas["Ingreso anual"] = st.radio("Su ingreso anual se encuentra en el rango de:", [
-            "Menos de $30,000", "Entre $30,000 y $60,000", "Entre $60,001 y $100,000",
-            "Entre $100,001 y $150,000", "Entre $150,001 y $250,000", "Más de $250,000"])
-        respuestas["% patrimonio a invertir"] = st.radio("¿Qué porcentaje de su patrimonio total planea invertir?", [
-            "Menos del 10%", "Entre 11% y 25%", "Entre 26% y 40%", "Entre 41% y 60%", "Más del 60%"])
-        respuestas["Horizonte de inversión"] = st.radio("¿Cuánto tiempo podría mantener sus inversiones sin necesitar acceso a ellas?", [
-            "Menos de 1 año", "Entre 1 y 2 años", "Entre 3 y 5 años", "Entre 6 y 10 años", "Más de 10 años"])
-        respuestas["Fondo de emergencia"] = st.radio("¿Tiene usted un fondo de emergencia equivalente a 3-6 meses de gastos?", [
-            "Sí, tengo un fondo de emergencia que cubre 6 meses o más",
-            "Sí, tengo un fondo que cubre entre 3 y 5 meses",
-            "Parcialmente, tengo ahorros que cubren 1-2 meses",
-            "No tengo un fondo de emergencia"])
-        respuestas["Nivel de endeudamiento"] = st.radio("¿Cuál es su nivel actual de endeudamiento en relación con sus ingresos anuales?", [
-            "No tengo deudas", "Menos del 25% de mis ingresos anuales", "Entre 26% y 50%",
-            "Entre 51% y 100%", "Más del 100% de mis ingresos anuales"])
-        respuestas["Ahorro mensual"] = st.radio("¿Qué porcentaje de sus ingresos mensuales destina al ahorro e inversión?", [
-            "Menos del 5%", "Entre 5% y 10%", "Entre 11% y 20%", "Entre 21% y 30%", "Más del 30%"])
+        respuestas["Edad"] = st.radio("Edad", ["Menor de 25 años", "26-35", "36-45", "46-55", "56-65", "Mayor de 65"])
+        respuestas["Situación Laboral"] = st.radio("Situación Laboral", ["Empleado tiempo completo", "Empleado tiempo parcial", "Empresario/Autónomo", "Jubilado", "Sin empleo actual"])
+        respuestas["Ingreso Anual"] = st.radio("Ingreso Anual", ["<30k", "30k-60k", "60k-100k", "100k-150k", "150k-250k", ">250k"])
+        respuestas["% Patrimonio a Invertir"] = st.radio("% Patrimonio a Invertir", ["<10%", "11-25%", "26-40%", "41-60%", ">60%"])
+        respuestas["Horizonte Temporal"] = st.radio("¿Cuánto tiempo puede mantener su inversión?", ["<1 año", "1-2 años", "3-5 años", "6-10 años", ">10 años"])
+        respuestas["Fondo de Emergencia"] = st.radio("¿Cuenta con fondo de emergencia?", ["Sí (6+ meses)", "Sí (3-5 meses)", "Parcial (1-2 meses)", "No tengo"])
+        respuestas["Nivel de Endeudamiento"] = st.radio("Nivel de Endeudamiento", ["Sin deudas", "<25%", "26-50%", "51-100%", ">100%"])
+        respuestas["% Ahorro Mensual"] = st.radio("% de ingresos al ahorro/inversión", ["<5%", "5-10%", "11-20%", "21-30%", ">30%"])
 
-    # SECCIÓN 2 (multiselect incluido)
+    # --- SECCIÓN 2: Experiencia y Conocimientos ---
     with st.expander("2. Experiencia y Conocimientos"):
-        respuestas["Nivel de conocimiento"] = st.radio("¿Cómo describiría su nivel de conocimiento sobre inversiones?", [
-            "Principiante", "Básico", "Intermedio", "Avanzado", "Experto"])
-        respuestas["Experiencia previa"] = st.multiselect("¿Cuál ha sido su experiencia previa con inversiones?", [
-            "Ninguna", "Depósitos", "Bonos", "Fondos o ETFs", "Acciones",
-            "Bienes raíces", "Materias primas", "Criptomonedas", "Derivados", "Capital privado"])
-        respuestas["Términos que comprende"] = st.multiselect("¿Cuáles términos financieros entiende completamente?", [
-            "Interés compuesto", "Diversificación", "Renta fija y variable", "P/E",
-            "Beta y correlación", "Rendimiento ajustado", "Derivados financieros", "Estructura de capital",
-            "Opciones", "Coberturas"])
-        respuestas["Frecuencia de revisión"] = st.radio("¿Con qué frecuencia revisa sus inversiones?", [
-            "Diariamente", "Semanalmente", "Mensualmente", "Trimestralmente", "Semestralmente", "Anualmente"])
-        respuestas["Rendimiento histórico personal"] = st.radio("¿Cómo ha sido su rendimiento en inversiones previas?", [
-            "No tengo experiencia", "Principalmente negativo", "Mixto más pérdidas", "Equilibrado",
-            "Mixto más ganancias", "Principalmente positivo"])
-        respuestas["Fuentes de información"] = st.multiselect("¿Cómo obtiene información para invertir?", [
-            "No busco información", "Noticias", "Webs especializadas", "Análisis financiero",
-            "Asesor profesional", "Libros y cursos", "Foros", "Investigación propia"])
+        respuestas["Nivel de Conocimiento"] = st.radio("Nivel de conocimiento en inversiones", ["Principiante", "Básico", "Intermedio", "Avanzado", "Experto"])
+        respuestas["Experiencia Previa"] = st.multiselect("Experiencia previa en:", ["Ninguna", "Depósitos", "Bonos", "Fondos/ETFs", "Acciones", "Bienes Raíces", "Materias Primas", "Criptomonedas", "Derivados", "Capital Privado"])
+        respuestas["Términos que Comprende"] = st.multiselect("Términos Financieros que entiende:", ["Interés Compuesto", "Diversificación", "Renta fija/variable", "P/E Ratio", "Beta/Correlación", "Riesgo Ajustado", "Derivados", "Estructura Capital", "Opciones", "Coberturas"])
+        respuestas["Frecuencia Revisión"] = st.radio("Frecuencia de revisión de inversiones", ["Diario", "Semanal", "Mensual", "Trimestral", "Semestral", "Anual"])
+        respuestas["Rendimiento Histórico"] = st.radio("Historial de rendimiento en inversiones", ["Sin experiencia", "Principalmente negativo", "Más pérdidas que ganancias", "Equilibrado", "Más ganancias que pérdidas", "Principalmente positivo"])
+        respuestas["Fuentes de Información"] = st.multiselect("¿Cómo toma decisiones de inversión?", ["No investigo", "Noticias", "Webs Financieras", "Análisis de expertos", "Asesor financiero", "Libros/cursos", "Foros", "Investigación propia"])
 
+    # --- SECCIÓN 3: Tolerancia al Riesgo ---
+    with st.expander("3. Tolerancia al Riesgo"):
+        respuestas["Reacción a Pérdida 20%"] = st.radio("Si pierde 20% en un mes, ¿qué haría?", ["Vender todo", "Vender parcial", "Esperar", "Mantener", "Comprar más"])
+        respuestas["Reacción a Pérdida 15%"] = st.radio("Inversión pierde 15% en 6 meses, fundamentos intactos. ¿Qué hace?", ["Vender", "Vender y diversificar", "Mantener", "Promediar", "Comprar más"])
+        respuestas["Escenario Preferido"] = st.radio("¿Qué escenario de riesgo/rendimiento prefiere?", ["0% pérdida, hasta 5% ganancia", "5% pérdida, hasta 10% ganancia", "15% pérdida, hasta 20% ganancia", "25% pérdida, hasta 35% ganancia", "40% pérdida, hasta 60% ganancia"])
+        respuestas["Portafolio Hipotético"] = st.radio("Elija un portafolio hipotético:", ["100% bajo riesgo", "75% bajo / 25% moderado", "50% bajo / 50% moderado", "25% bajo / 75% alto", "100% alto riesgo"])
+        respuestas["Reacción a Volatilidad"] = st.radio("¿Cómo se siente ante alta volatilidad?", ["Muy ansioso", "Preocupado", "Neutral", "Interesado", "Emocionado"])
+        respuestas["Actitud hacia Pérdidas"] = st.radio("Actitud ante pérdidas financieras:", ["Evito riesgos", "Acepto pequeñas pérdidas", "Acepto pérdidas temporales", "Acepto grandes pérdidas", "Aprendo de las pérdidas"])
+        respuestas["Reacción a Crisis Financieras"] = st.radio("¿Cómo actuó o actuaría ante crisis como 2008 o COVID?", ["Vender todo", "Vender parcial", "Esperar", "Mantener", "Comprar más"])
+        respuestas["Preocupaciones de Inversión"] = st.radio("¿Qué le preocupa más al invertir?", ["Perder capital", "No alcanzar objetivos", "Perder contra inflación", "No aprovechar oportunidades", "Perder rendimientos altos"])
+        respuestas["Comparación con Mercado"] = st.radio("Si rinde 10% menos que el mercado, ¿cómo se sentiría?", ["Muy insatisfecho", "Insatisfecho pero comprendo", "Neutral", "Relativamente satisfecho", "No me afecta"])
+        respuestas["Escala Tranquilidad/Rendimiento"] = st.radio("¿Prefiere tranquilidad o rendimiento?", ["Dormir tranquilo", "Más tranquilidad", "Equilibrio", "Más rendimiento", "Máximo rendimiento"])
+
+    # --- SECCIÓN 4: Objetivos de Inversión ---
+    with st.expander("4. Objetivos de Inversión"):
+        respuestas["Objetivo Principal"] = st.radio("¿Cuál es su principal objetivo de inversión?", ["Preservar capital", "Ingreso pasivo", "Crecimiento moderado", "Crecimiento agresivo", "Especulativo"])
+        respuestas["Motivo Ahorro"] = st.multiselect("¿Para qué está ahorrando?", ["Fondo emergencia", "Compra corto plazo", "Compra mediano plazo", "Educación", "Independencia financiera", "Jubilación", "Legado", "Crecimiento patrimonial"])
+        respuestas["Uso del Capital"] = st.radio("¿En cuánto tiempo planea usar este capital?", ["<1 año", "1-3 años", "4-7 años", "8-15 años", ">15 años"])
+        respuestas["Retiros Anuales"] = st.radio("¿Qué porcentaje podría retirar anualmente?", ["<2%", "2-4%", "4-6%", "6-8%", ">8%"])
+        respuestas["Fuentes de Jubilación"] = st.radio("¿Tiene otras fuentes de ingresos para jubilación?", ["No, es la principal", "Sí, importante", "Sí, complementaria", "Sí, diversificada"])
+        respuestas["Importancia de Liquidez"] = st.radio("¿Qué tan importante es la liquidez para usted?", ["Extremadamente importante", "Muy importante", "Moderadamente importante", "Poco importante", "No importante"])
+        respuestas["Rendimiento Esperado"] = st.radio("Rendimiento anual esperado:", ["1-3%", "4-6%", "7-9%", "10-12%", ">12%"])
+        respuestas["Objetivo Patrimonial"] = st.radio("Objetivo final de patrimonio:", ["Mantener poder adquisitivo", "Crecimiento modesto", "Duplicar capital", "Triplicar/cuadruplicar", "Multiplicar x5 o más"])
+
+    # --- SECCIÓN 5: Circunstancias Personales ---
+    with st.expander("5. Circunstancias Personales"):
+        respuestas["Dependientes Económicos"] = st.radio("¿Tiene dependientes económicos?", ["No", "Dependen parcialmente", "Dependen totalmente", "Otros recursos"])
+        respuestas["Estabilidad Ingresos"] = st.radio("Estabilidad de ingresos", ["Muy estable", "Estable", "Moderada", "Variable", "Inestable"])
+        respuestas["Obligaciones Financieras"] = st.radio("Nivel de obligaciones financieras", ["Sin deudas", "Deudas menores", "Deudas moderadas", "Deudas significativas"])
+        respuestas["Gastos Fijos"] = st.radio("¿Qué % de sus gastos son fijos?", ["<30%", "30-50%", "51-70%", ">70%"])
+        respuestas["Capacidad sin Ingresos"] = st.radio("¿Cuánto tiempo mantendría su nivel de vida sin ingresos?", ["<3 meses", "3-6 meses", "7-12 meses", ">12 meses"])
+
+    # --- SECCIÓN 6: Factores Psicológicos ---
+    with st.expander("6. Factores Psicológicos"):
+        respuestas["Toma de Decisiones"] = st.radio("¿Cómo toma decisiones importantes?", ["Evita riesgos", "Riesgos calculados", "Equilibrado", "Moderadamente arriesgado", "Arriesgado por oportunidad"])
+        respuestas["Reacción a Pérdidas Financieras"] = st.radio("¿Cómo reacciona ante pérdidas económicas?", ["Afecta mucho", "Incomoda, pero aprende", "Analiza y sigue", "Lo ve como aprendizaje", "Le afecta poco"])
+        respuestas["Actitud hacia el Dinero"] = st.radio("¿Qué frase lo define mejor?", ["Pájaro en mano", "Precavido", "El dinero debe trabajar", "Sin riesgo no hay recompensa", "Audaz"])
+        respuestas["Lotería Hipotética"] = st.radio("¿Qué prefiere en una lotería?", ["$1,000 seguros", "50% de $3,000", "25% de $8,000", "10% de $30,000", "1% de $500,000"])
+        respuestas["Ansiedad en Finanzas"] = st.radio("¿Cómo se siente al tomar decisiones financieras importantes?", ["Muy ansioso", "Algo ansioso", "Neutral", "Confiado", "Muy confiado"])
+        respuestas["Preferencia Salario"] = st.radio("¿Qué prefiere en su trabajo?", ["Fijo", "Probablemente fijo", "Indiferente", "Probablemente variable", "Variable alto riesgo"])
+        respuestas["Estilo de Planificación"] = st.radio("¿Cómo se describe como planificador?", ["Meticuloso", "Organizado", "Equilibrado", "Adaptable", "Espontáneo"])
+        respuestas["Reacción a Noticias Negativas"] = st.radio("¿Qué hace ante malas noticias del mercado?", ["Vendería", "Esperaría", "Mantendría calma", "Buscaría oportunidades", "Ignoraría ruido"])
+
+    # --- SECCIÓN 7: Capacidad Financiera ---
+    with st.expander("7. Capacidad Financiera"):
+        respuestas["% de Patrimonio"] = st.radio("¿Qué % de su patrimonio representa esta inversión?", ["<10%", "10-25%", "26-50%", "51-75%", ">75%"])
+        respuestas["Tiempo Acumulando Capital"] = st.radio("¿Cuánto tardó en reunir este capital?", ["<1 año", "1-3 años", "4-7 años", "8-15 años", ">15 años"])
+        respuestas["Impacto Pérdida 30%"] = st.radio("Si pierde 30%, ¿cómo afecta su vida?", ["Impacto severo", "Impacto significativo", "Moderado", "Leve", "Sin impacto"])
+        respuestas["Capacidad de Aportar Más"] = st.radio("¿Puede seguir aportando a esta inversión?", ["No", "Limitada", "Moderada", "Buena", "Excelente"])
+        respuestas["Expectativas Ingresos Futuros"] = st.radio("¿Espera recibir fondos extra (herencias, bonos)?", ["No", "Pequeñas posibilidades", "Probable moderado", "Definitivamente significativo", "Muy significativo"])
+
+    # --- Enviar ---
     enviado = st.form_submit_button("Enviar Cuestionario")
+
 
 if enviado:
     st.success("✅ Cuestionario enviado. Analizando con Claude...")
