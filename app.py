@@ -245,7 +245,8 @@ async def analizar_con_claude(respuestas):
     }
     async with httpx.AsyncClient() as client:
         r = await client.post("https://api.anthropic.com/v1/messages", headers=headers, json=payload)
-        return r.json()["content"]
+        return r.json()["content"][0]["text"]  # ✅ CORREGIDO
+
 
 # --- INICIO DEL FORMULARIO ---
 # --- FORMULARIO DE PERFIL DE RIESGO COMPLETO ---
