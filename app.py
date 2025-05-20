@@ -550,4 +550,537 @@ def main():
         st.session_state.analysis_result = None
     if 'investment_amount' not in st.session_state:
         st.session_state.investment_amount = 10000
-    if 'csv_generated' not in st.session_state
+    if 'csv_generated' not in st.session_state:
+        st.session_state.csv_generated = False
+    
+    # Configurar API key
+    api_key_available = setup_api_key()
+    
+    # Botón para volver al cuestionario (en sidebar)
+    if st.session_state.page != 'questionnaire':
+        if st.sidebar.button("Volver al cuestionario"):
+            st.session_state.page = 'questionnaire'
+            st.session_state.responses = []
+            st.session_state.analysis_result = None
+            st.session_state.csv_generated = False
+            st.experimental_rerun()
+    
+    # ----- PÁGINA: CUESTIONARIO -----
+    if st.session_state.page == 'questionnaire':
+        st.title("Cuestionario de Perfil de Riesgo de Inversión")
+        
+        st.markdown("""
+        Por favor, responda las siguientes preguntas para determinar su perfil de riesgo como inversionista.
+        Sus respuestas serán analizadas para recomendarle el portafolio más adecuado según su tolerancia al riesgo.
+        """)
+        
+        # Formulario del cuestionario
+        with st.form("risk_profile_form"):
+            responses = []
+            
+            for i, q in enumerate(RISK_QUESTIONS):
+                st.subheader(f"Pregunta {i+1}: {q['question']}")
+                
+                # Crear opciones de radio para cada pregunta
+                options = [option["text"] for option in q["options"]]
+                scores = [option["score"] for option in q["options"]]
+                
+                answer = st.radio(
+                    f"Seleccione una opción:",
+                    options,
+                    key=f"q_{i}"
+                )
+                
+                if answer:
+                    idx = options.index(answer)
+                    score = scores[idx]
+                    responses.append(score)
+                else:
+                    responses.append(None)
+            
+            # Botón de envío
+            submitted = st.form_submit_button("Enviar respuestas")
+            
+            if submitted:
+                # Verificar que todas las preguntas fueron respondidas
+                if None in responses:
+                    st.error("Por favor, responda todas las preguntas antes de continuar.")
+                elif not api_key_available:
+                    st.error("Es necesario proporcionar una API key de Claude para analizar los resultados.")
+                else:
+                    st.session_state.responses = responses
+                    
+                    # Crear CSV con los resultados
+                    results_df = pd.DataFrame({
+                        'pregunta': [f"Pregunta {i+1}" for i in range(len(responses))],
+                        'puntuacion': responses,
+                        'timestamp': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(responses)
+                    })
+                    
+                    # Guardar CSV
+                    csv = results_df.to_csv(index=False)
+                    
+                    # Preparar para descargar
+                    csv_str = StringIO()
+                    results_df.to_csv(csv_str, index=False)
+                    csv_str = csv_str.getvalue()
+                    
+                    # Descargar CSV automáticamente
+                    st.download_button(
+                        label="Descargar resultados (CSV)",
+                        data=csv_str,
+                        file_name=f"perfil_riesgo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv",
+                        key="download_csv"
+                    )
+                    
+                    st.session_state.csv_generated = True
+                    
+                    # Analizar con Claude
+                    with st.spinner("Analizando su perfil de riesgo..."):
+                        analysis_result = analyze_with_claude(responses, st.session_state.api_key)
+                        
+                        if analysis_result:
+                            st.session_state.analysis_result = analysis_result
+                            st.session_state.page = 'portfolio'
+                            st.experimental_rerun()
+                        else:
+                            st.error("No se pudieron analizar los resultados. Por favor, intente nuevamente.")
+    
+    # ----- PÁGINA: PORTAFOLIO RECOMENDADO -----
+    elif st.session_state.page == 'portfolio':
+        if not st.session_state.analysis_result:
+            st.error("No hay resultados de análisis disponibles. Por favor, complete el cuestionario.")
+            st.session_state.page = 'questionnaire'
+            st.experimental_rerun()
+        else:
+            analysis = st.session_state.analysis_result
+            recommended = analysis["recommended_portfolio"]
+            portfolio = PORTFOLIOS[recommended]
+            
+            st.title(f"Su Portafolio Recomendado: {recommended}")
+            
+            # Mostrar información del portafolio
+            col1, col2 = st.columns([3, 2])
+            
+            with col1:
+                st.subheader("Análisis de su Perfil de Riesgo")
+                
+                # Calcular coeficiente de aversión al riesgo
+                risk_aversion = calculate_risk_aversion(st.session_state.responses)
+                
+                st.markdown(f"""
+                **Coeficiente de Aversión al Riesgo (A):** {risk_aversion}
+                
+                **Portafolio Recomendado:** {recommended}
+                
+                **Utilidades Calculadas:**
+                - Conservador: {analysis["portfolio_utilities"]["Conservador"]:.4f}
+                - Moderado: {analysis["portfolio_utilities"]["Moderado"]:.4f}
+                - Agresivo: {analysis["portfolio_utilities"]["Agresivo"]:.4f}
+                
+                **Asignación Óptima:** {analysis["optimal_allocation"]*100:.1f}% en el portafolio de riesgo y {(1-analysis["optimal_allocation"])*100:.1f}% en activos libres de riesgo
+                
+                **Características del Portafolio:**
+                - Rendimiento Esperado Anual: {portfolio["expected_return"]*100:.1f}%
+                - Desviación Estándar: {portfolio["standard_deviation"]*100:.1f}%
+                - Ratio de Sharpe: {portfolio["sharpe_ratio"]:.2f}
+                
+                **Explicación:** {analysis["explanation"]}
+                """)
+            
+            with col2:
+                # Gráfico de comparación de portafolios
+                st.subheader("Comparación de Portafolios")
+                
+                # Datos para el gráfico
+                portfolios_data = {
+                    'Portafolio': ['Conservador', 'Moderado', 'Agresivo'],
+                    'Rendimiento': [PORTFOLIOS['Conservador']['expected_return']*100, 
+                                   PORTFOLIOS['Moderado']['expected_return']*100, 
+                                   PORTFOLIOS['Agresivo']['expected_return']*100],
+                    'Riesgo': [PORTFOLIOS['Conservador']['standard_deviation']*100, 
+                              PORTFOLIOS['Moderado']['standard_deviation']*100, 
+                              PORTFOLIOS['Agresivo']['standard_deviation']*100],
+                    'Utilidad': [analysis["portfolio_utilities"]["Conservador"],
+                                analysis["portfolio_utilities"]["Moderado"],
+                                analysis["portfolio_utilities"]["Agresivo"]]
+                }
+                
+                # Resaltar el portafolio recomendado
+                colors = ['lightgrey', 'lightgrey', 'lightgrey']
+                if recommended == 'Conservador':
+                    colors[0] = 'darkgreen'
+                elif recommended == 'Moderado':
+                    colors[1] = 'darkgreen'
+                else:
+                    colors[2] = 'darkgreen'
+                
+                # Crear gráfico de riesgo vs rendimiento
+                fig = px.scatter(
+                    portfolios_data, 
+                    x='Riesgo', 
+                    y='Rendimiento', 
+                    size='Utilidad',
+                    color='Portafolio',
+                    size_max=20,
+                    text='Portafolio',
+                    title='Riesgo vs Rendimiento',
+                    labels={'Riesgo': 'Riesgo (Desviación Estándar %)', 'Rendimiento': 'Rendimiento Esperado (%)'}
+                )
+                
+                # Personalizar gráfico
+                fig.update_traces(marker=dict(opacity=0.7), selector=dict(mode='markers'))
+                fig.update_layout(height=400)
+                
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Ingresar monto de inversión
+            st.subheader("Simulación de Inversión")
+            
+            investment_amount = st.number_input(
+                "Ingrese el monto a invertir (USD):",
+                min_value=1000,
+                max_value=10000000,
+                value=st.session_state.investment_amount,
+                step=1000,
+                format="%d"
+            )
+            
+            st.session_state.investment_amount = investment_amount
+            
+            if st.button("Ver Detalles del Portafolio"):
+                st.session_state.page = 'details'
+                st.experimental_rerun()
+    
+    # ----- PÁGINA: DETALLES DEL PORTAFOLIO -----
+    elif st.session_state.page == 'details':
+        if not st.session_state.analysis_result:
+            st.error("No hay resultados de análisis disponibles. Por favor, complete el cuestionario.")
+            st.session_state.page = 'questionnaire'
+            st.experimental_rerun()
+        else:
+            analysis = st.session_state.analysis_result
+            recommended = analysis["recommended_portfolio"]
+            portfolio = PORTFOLIOS[recommended]
+            assets = portfolio["assets"]
+            investment_amount = st.session_state.investment_amount
+            
+            st.title(f"Detalles del Portafolio {recommended}")
+            
+            # Obtener datos en tiempo real
+            with st.spinner("Obteniendo datos de mercado en tiempo real..."):
+                real_time_data = get_real_time_data(list(assets.keys()))
+            
+            # Gráficos y análisis
+            col1, col2 = st.columns([2, 3])
+            
+            with col1:
+                st.subheader("Asignación de Activos")
+                
+                # Gráfico circular de asignación
+                fig = px.pie(
+                    names=list(assets.keys()),
+                    values=list(assets.values()),
+                    title=f"Distribución del Portafolio (Total: ${investment_amount:,.2f})",
+                    hover_data=[f"${investment_amount * weight:,.2f}" for weight in assets.values()],
+                    labels={'names': 'Activo', 'values': 'Porcentaje'},
+                    color_discrete_sequence=px.colors.qualitative.Plotly,
+                )
+                
+                fig.update_traces(textposition='inside', textinfo='percent+label')
+                fig.update_layout(height=500)
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Mostrar asignación óptima
+                st.info(f"""
+                **Recomendación de asignación:**
+                - {analysis["optimal_allocation"]*100:.1f}% (${investment_amount * analysis["optimal_allocation"]:,.2f}) en este portafolio de riesgo
+                - {(1-analysis["optimal_allocation"])*100:.1f}% (${investment_amount * (1-analysis["optimal_allocation"]):,.2f}) en activos libres de riesgo
+                """)
+            
+            with col2:
+                st.subheader("Rendimiento en Tiempo Real")
+                
+                # Tabla con datos en tiempo real
+                data_table = []
+                
+                for ticker, weight in assets.items():
+                    ticker_data = real_time_data.get(ticker, {"price": 0, "change": 0})
+                    investment = weight * investment_amount
+                    actual_value = investment * (1 + ticker_data["change"]/100)
+                    gain_loss = actual_value - investment
+                    
+                    data_table.append({
+                        "Activo": ticker,
+                        "Ticker": ticker,
+                        "Inversión": f"${investment:,.2f}",
+                        "Precio Actual": f"${ticker_data['price']:,.2f}",
+                        "Cambio (%)": f"{ticker_data['change']:.2f}%",
+                        "Valor Actual": f"${actual_value:,.2f}",
+                        "Ganancia/Pérdida": f"${gain_loss:,.2f}",
+                        "Peso (%)": f"{weight*100:.1f}%",
+                        "Tipo": ASSET_INFO.get(ticker, {}).get("type", ""),
+                        "Riesgo": ASSET_INFO.get(ticker, {}).get("risk", "")
+                    })
+                
+                # Calcular totales
+                total_investment = investment_amount
+                total_current = sum([weight * investment_amount * (1 + real_time_data.get(ticker, {"change": 0})["change"]/100) for ticker, weight in assets.items()])
+                total_gain_loss = total_current - total_investment
+                total_change = (total_gain_loss / total_investment) * 100
+                
+                # Convertir a DataFrame
+                df = pd.DataFrame(data_table)
+                
+                # Mostrar tabla
+                st.dataframe(df, hide_index=True)
+                
+                # Mostrar resumen
+                st.metric(
+                    label="Valor Total del Portafolio", 
+                    value=f"${total_current:,.2f}", 
+                    delta=f"${total_gain_loss:,.2f} ({total_change:.2f}%)"
+                )
+            
+            # Lista de activos con descripciones
+            st.subheader("Detalles de los Activos")
+            
+            # Crear tabs para cada activo
+            tabs = st.tabs([f"{ticker} - {ASSET_INFO.get(ticker, {}).get('name', ticker)}" for ticker in assets.keys()])
+            
+            for i, (ticker, tab) in enumerate(zip(assets.keys(), tabs)):
+                with tab:
+                    asset_info = ASSET_INFO.get(ticker, {})
+                    col1, col2 = st.columns([1, 1])
+                    
+                    with col1:
+                        st.markdown(f"""
+                        ### {asset_info.get('name', ticker)}
+                        
+                        **Tipo:** {asset_info.get('type', 'N/A')}
+                        
+                        **Nivel de Riesgo:** {asset_info.get('risk', 'N/A')}
+                        
+                        **Descripción:**
+                        {asset_info.get('description', 'No hay descripción disponible.')}
+                        
+                        **Inversión en este activo:** ${investment_amount * assets[ticker]:,.2f} ({assets[ticker]*100:.1f}% del portafolio)
+                        """)
+                    
+                    with col2:
+                        # Análisis del activo con Claude
+                        if api_key_available:
+                            analysis_placeholder = st.empty()
+                            analysis_placeholder.info("Obteniendo análisis del activo...")
+                            
+                            try:
+                                asset_analysis = get_asset_analysis(ticker, st.session_state.api_key)
+                                analysis_placeholder.markdown(f"""
+                                **Análisis del Activo:**
+                                
+                                {asset_analysis}
+                                """)
+                            except Exception as e:
+                                analysis_placeholder.warning(f"No se pudo obtener análisis: {e}")
+                        else:
+                            st.warning("Proporcione una API key de Claude para obtener análisis detallado de este activo.")
+                        
+                        # Datos históricos
+                        try:
+                            stock = yf.Ticker(ticker)
+                            hist = stock.history(period="6mo")
+                            
+                            if not hist.empty:
+                                fig = px.line(
+                                    hist, 
+                                    y='Close',
+                                    title=f'Precio histórico de {ticker} (últimos 6 meses)',
+                                    labels={'Close': 'Precio de cierre', 'Date': 'Fecha'}
+                                )
+                                fig.update_layout(showlegend=False, height=300)
+                                st.plotly_chart(fig, use_container_width=True)
+                        except:
+                            st.warning(f"No se pudieron obtener datos históricos para {ticker}")
+            
+            # Botón para ir a la simulación
+            if st.button("Ver Simulación de Rendimiento"):
+                st.session_state.page = 'simulation'
+                st.experimental_rerun()
+    
+    # ----- PÁGINA: SIMULACIÓN DE RENDIMIENTO -----
+    elif st.session_state.page == 'simulation':
+        if not st.session_state.analysis_result:
+            st.error("No hay resultados de análisis disponibles. Por favor, complete el cuestionario.")
+            st.session_state.page = 'questionnaire'
+            st.experimental_rerun()
+        else:
+            analysis = st.session_state.analysis_result
+            recommended = analysis["recommended_portfolio"]
+            portfolio = PORTFOLIOS[recommended]
+            investment_amount = st.session_state.investment_amount
+            
+            st.title(f"Simulación de Rendimiento del Portafolio {recommended}")
+            
+            # Opciones de simulación
+            col1, col2 = st.columns([1, 3])
+            
+            with col1:
+                st.subheader("Parámetros de Simulación")
+                
+                simulation_years = st.slider("Horizonte de inversión (años):", 1, 20, 5)
+                simulation_days = simulation_years * 365
+                
+                confidence_level = st.slider("Nivel de confianza (%):", 70, 99, 95)
+                
+                st.markdown(f"""
+                **Parámetros del Portafolio:**
+                
+                - Rendimiento Esperado Anual: {portfolio["expected_return"]*100:.1f}%
+                - Desviación Estándar Anual: {portfolio["standard_deviation"]*100:.1f}%
+                - Inversión Inicial: ${investment_amount:,.2f}
+                - Horizonte: {simulation_years} años
+                """)
+                
+                st.info(f"""
+                **Estimaciones:**
+                
+                - Valor Esperado al final del periodo: ${investment_amount * (1 + portfolio["expected_return"])**simulation_years:,.2f}
+                - Rendimiento Total Esperado: {((1 + portfolio["expected_return"])**simulation_years - 1) * 100:.1f}%
+                """)
+                
+                if st.button("Ejecutar Nueva Simulación"):
+                    st.experimental_rerun()
+            
+            with col2:
+                st.subheader("Proyección de Rendimiento")
+                
+                # Simulación de rendimiento
+                np.random.seed(42)  # Para reproducibilidad
+                
+                # Simulación de Monte Carlo
+                num_simulations = 1000
+                simulation_results = []
+                
+                # Parámetros anualizados
+                annual_return = portfolio["expected_return"]
+                annual_std = portfolio["standard_deviation"]
+                
+                # Parámetros diarios
+                daily_return = annual_return/252
+                daily_std = annual_std/np.sqrt(252)
+                
+                for _ in range(num_simulations):
+                    # Generar rendimientos diarios
+                    daily_returns = np.random.normal(daily_return, daily_std, simulation_days)
+                    
+                    # Calcular valor del portafolio a lo largo del tiempo
+                    portfolio_value = [investment_amount]
+                    for r in daily_returns:
+                        portfolio_value.append(portfolio_value[-1] * (1 + r))
+                    
+                    simulation_results.append(portfolio_value)
+                
+                # Calcular percentiles
+                df_simulation = pd.DataFrame(simulation_results).T
+                df_simulation['mean'] = df_simulation.mean(axis=1)
+                df_simulation['median'] = df_simulation.median(axis=1)
+                df_simulation['lower'] = df_simulation.quantile(0.5 - confidence_level/200, axis=1)
+                df_simulation['upper'] = df_simulation.quantile(0.5 + confidence_level/200, axis=1)
+                
+                # Crear gráfico de simulación
+                fig = go.Figure()
+                
+                # Añadir área de confianza
+                fig.add_trace(
+                    go.Scatter(
+                        x=list(range(simulation_days + 1)),
+                        y=df_simulation['upper'],
+                        fill=None,
+                        mode='lines',
+                        line=dict(color='rgba(0,100,80,0.2)'),
+                        name=f'Límite superior ({confidence_level}%)'
+                    )
+                )
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=list(range(simulation_days + 1)),
+                        y=df_simulation['lower'],
+                        fill='tonexty',
+                        mode='lines',
+                        line=dict(color='rgba(0,100,80,0.2)'),
+                        name=f'Límite inferior ({confidence_level}%)'
+                    )
+                )
+                
+                # Añadir línea de valor esperado
+                fig.add_trace(
+                    go.Scatter(
+                        x=list(range(simulation_days + 1)),
+                        y=df_simulation['mean'],
+                        mode='lines',
+                        line=dict(color='rgb(0,100,80)', width=2),
+                        name='Valor Esperado'
+                    )
+                )
+                
+                # Configurar diseño
+                fig.update_layout(
+                    title=f'Simulación de Monte Carlo ({num_simulations} simulaciones)',
+                    xaxis_title='Días',
+                    yaxis_title='Valor del Portafolio ($)',
+                    legend=dict(
+                        yanchor="top",
+                        y=0.99,
+                        xanchor="left",
+                        x=0.01
+                    ),
+                    height=500
+                )
+                
+                # Configurar ejes
+                fig.update_xaxes(
+                    tickvals=[0, simulation_days/4, simulation_days/2, simulation_days*3/4, simulation_days],
+                    ticktext=[
+                        'Inicio',
+                        f'{simulation_years/4:.1f} años',
+                        f'{simulation_years/2:.1f} años',
+                        f'{simulation_years*3/4:.1f} años',
+                        f'{simulation_years} años'
+                    ]
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Mostrar métricas clave
+                final_values = df_simulation.iloc[-1]
+                
+                st.subheader("Resultados de la Simulación")
+                
+                metrics_col1, metrics_col2, metrics_col3 = st.columns(3)
+                
+                with metrics_col1:
+                    st.metric(
+                        label="Valor Esperado Final", 
+                        value=f"${final_values['mean']:,.2f}",
+                        delta=f"{(final_values['mean']/investment_amount - 1)*100:.1f}%"
+                    )
+                
+                with metrics_col2:
+                    st.metric(
+                        label=f"Mejor Escenario ({(100-confidence_level)/2:.1f}%)", 
+                        value=f"${final_values['upper']:,.2f}",
+                        delta=f"{(final_values['upper']/investment_amount - 1)*100:.1f}%"
+                    )
+                
+                with metrics_col3:
+                    st.metric(
+                        label=f"Peor Escenario ({(100-confidence_level)/2:.1f}%)", 
+                        value=f"${final_values['lower']:,.2f}",
+                        delta=f"{(final_values['lower']/investment_amount - 1)*100:.1f}%"
+                    )
+
+if __name__ == "__main__":
+    main()
