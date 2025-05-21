@@ -566,86 +566,89 @@ def main():
             st.experimental_rerun()
     
     # ----- PÁGINA: CUESTIONARIO -----
-    if st.session_state.page == 'questionnaire':
-        st.title("Cuestionario de Perfil de Riesgo de Inversión")
+# ----- PÁGINA: CUESTIONARIO -----
+if st.session_state.page == 'questionnaire':
+    st.title("Cuestionario de Perfil de Riesgo de Inversión")
+    
+    st.markdown("""
+    Por favor, responda las siguientes preguntas para determinar su perfil de riesgo como inversionista.
+    Sus respuestas serán analizadas para recomendarle el portafolio más adecuado según su tolerancia al riesgo.
+    """)
+    
+    # Variables para almacenar las respuestas fuera del formulario
+    temp_responses = []
+    
+    # Formulario del cuestionario
+    with st.form("risk_profile_form"):
+        for i, q in enumerate(RISK_QUESTIONS):
+            st.subheader(f"Pregunta {i+1}: {q['question']}")
+            
+            # Crear opciones de radio para cada pregunta
+            options = [option["text"] for option in q["options"]]
+            scores = [option["score"] for option in q["options"]]
+            
+            answer = st.radio(
+                f"Seleccione una opción:",
+                options,
+                key=f"q_{i}"
+            )
+            
+            if answer:
+                idx = options.index(answer)
+                score = scores[idx]
+                temp_responses.append(score)
+            else:
+                temp_responses.append(None)
         
-        st.markdown("""
-        Por favor, responda las siguientes preguntas para determinar su perfil de riesgo como inversionista.
-        Sus respuestas serán analizadas para recomendarle el portafolio más adecuado según su tolerancia al riesgo.
-        """)
-        
-        # Formulario del cuestionario
-        with st.form("risk_profile_form"):
-            responses = []
+        # Botón de envío
+        submitted = st.form_submit_button("Enviar respuestas")
+    
+    # Colocar el código de procesamiento FUERA del formulario
+    if submitted:
+        # Verificar que todas las preguntas fueron respondidas
+        if None in temp_responses:
+            st.error("Por favor, responda todas las preguntas antes de continuar.")
+        elif not api_key_available:
+            st.error("Es necesario proporcionar una API key de Claude para analizar los resultados.")
+        else:
+            st.session_state.responses = temp_responses
             
-            for i, q in enumerate(RISK_QUESTIONS):
-                st.subheader(f"Pregunta {i+1}: {q['question']}")
+            # Crear CSV con los resultados
+            results_df = pd.DataFrame({
+                'pregunta': [f"Pregunta {i+1}" for i in range(len(temp_responses))],
+                'puntuacion': temp_responses,
+                'timestamp': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(temp_responses)
+            })
+            
+            # Guardar CSV
+            csv = results_df.to_csv(index=False)
+            
+            # Preparar para descargar
+            csv_str = StringIO()
+            results_df.to_csv(csv_str, index=False)
+            csv_str = csv_str.getvalue()
+            
+            # Descargar CSV automáticamente (FUERA del formulario)
+            st.download_button(
+                label="Descargar resultados (CSV)",
+                data=csv_str,
+                file_name=f"perfil_riesgo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                key="download_csv"
+            )
+            
+            st.session_state.csv_generated = True
+            
+            # Analizar con Claude
+            with st.spinner("Analizando su perfil de riesgo..."):
+                analysis_result = analyze_with_claude(temp_responses, st.session_state.api_key)
                 
-                # Crear opciones de radio para cada pregunta
-                options = [option["text"] for option in q["options"]]
-                scores = [option["score"] for option in q["options"]]
-                
-                answer = st.radio(
-                    f"Seleccione una opción:",
-                    options,
-                    key=f"q_{i}"
-                )
-                
-                if answer:
-                    idx = options.index(answer)
-                    score = scores[idx]
-                    responses.append(score)
+                if analysis_result:
+                    st.session_state.analysis_result = analysis_result
+                    st.session_state.page = 'portfolio'
+                    st.experimental_rerun()
                 else:
-                    responses.append(None)
-            
-            # Botón de envío
-            submitted = st.form_submit_button("Enviar respuestas")
-            
-            if submitted:
-                # Verificar que todas las preguntas fueron respondidas
-                if None in responses:
-                    st.error("Por favor, responda todas las preguntas antes de continuar.")
-                elif not api_key_available:
-                    st.error("Es necesario proporcionar una API key de Claude para analizar los resultados.")
-                else:
-                    st.session_state.responses = responses
-                    
-                    # Crear CSV con los resultados
-                    results_df = pd.DataFrame({
-                        'pregunta': [f"Pregunta {i+1}" for i in range(len(responses))],
-                        'puntuacion': responses,
-                        'timestamp': [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(responses)
-                    })
-                    
-                    # Guardar CSV
-                    csv = results_df.to_csv(index=False)
-                    
-                    # Preparar para descargar
-                    csv_str = StringIO()
-                    results_df.to_csv(csv_str, index=False)
-                    csv_str = csv_str.getvalue()
-                    
-                    # Descargar CSV automáticamente
-                    st.download_button(
-                        label="Descargar resultados (CSV)",
-                        data=csv_str,
-                        file_name=f"perfil_riesgo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv",
-                        key="download_csv"
-                    )
-                    
-                    st.session_state.csv_generated = True
-                    
-                    # Analizar con Claude
-                    with st.spinner("Analizando su perfil de riesgo..."):
-                        analysis_result = analyze_with_claude(responses, st.session_state.api_key)
-                        
-                        if analysis_result:
-                            st.session_state.analysis_result = analysis_result
-                            st.session_state.page = 'portfolio'
-                            st.experimental_rerun()
-                        else:
-                            st.error("No se pudieron analizar los resultados. Por favor, intente nuevamente.")
+                    st.error("No se pudieron analizar los resultados. Por favor, intente nuevamente.")
     
     # ----- PÁGINA: PORTAFOLIO RECOMENDADO -----
     elif st.session_state.page == 'portfolio':
