@@ -1318,14 +1318,14 @@ def page_portfolio():
                 <div class="status-card">
                     <div class="status-value ${total_return:+,.0f}</div>
                     <div class="status-label">Ganancia/Pérdida</div>
-                    <div class="status-change {performance_class}">{total_return_pct:+.2f}%</div>
+                    <div class="status-change {performance_class}">{total_return_pct:+.3f}%</div>
                 </div>
                 <div class="status-card">
-                    <div class="status-value {daily_class}">{performance_data["current_portfolio_change"]:+.2f}%</div>
+                    <div class="status-value {daily_class}">{performance_data["current_portfolio_change"]:+.3f}%</div>
                     <div class="status-label">Cambio Diario</div>
                 </div>
                 <div class="status-card">
-                    <div class="status-value {ytd_class}">{performance_data["ytd_portfolio_change"]:+.2f}%</div>
+                    <div class="status-value {ytd_class}">{performance_data["ytd_portfolio_change"]:+.3f}%</div>
                     <div class="status-label">Rendimiento Anual</div>
                 </div>
             </div>
