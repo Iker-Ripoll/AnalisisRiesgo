@@ -2,402 +2,763 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-from dataclasses import dataclass
-from typing import Dict, List, Tuple
+import numpy as np
+from datetime import datetime, timedelta
 import anthropic
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Calculadora de Tolerancia al Riesgo",
-    page_icon="📈",
+    page_title="Sistema de Gestión de Portafolios",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS personalizados
+# Estilos CSS profesionales
 st.markdown("""
 <style>
-.main-header {
-    font-size: 2.5rem;
-    color: #1f4e79;
-    text-align: center;
-    margin-bottom: 1rem;
-}
-.sub-header {
-    font-size: 1.2rem;
-    color: #666;
-    text-align: center;
-    margin-bottom: 2rem;
-}
-.question-container {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 10px;
-    margin: 1rem 0;
-    border-left: 4px solid #1f4e79;
-}
-.result-container {
-    background-color: #e8f4fd;
-    padding: 2rem;
-    border-radius: 15px;
-    border: 2px solid #1f4e79;
-    margin: 2rem 0;
-}
-.portfolio-container {
-    background-color: #f0f8ff;
-    padding: 2rem;
-    border-radius: 15px;
-    border: 2px solid #4a90e2;
-    margin: 2rem 0;
-}
-.metric-card {
-    background-color: white;
-    padding: 1rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: center;
-}
+    .main-header {
+        font-size: 2.8rem;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .sub-header {
+        font-size: 1.1rem;
+        color: #7f8c8d;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-weight: 400;
+    }
+    .question-card {
+        background: #ffffff;
+        border: 1px solid #e8e9ea;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .result-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+    }
+    .portfolio-card {
+        background: #ffffff;
+        border: 1px solid #e8e9ea;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .metric-container {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #e8e9ea;
+    }
+    .asset-info {
+        background: #f8f9fa;
+        border-left: 4px solid #3498db;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 0 4px 4px 0;
+    }
+    .sidebar-nav {
+        background: #2c3e50;
+        color: white;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    .performance-positive {
+        color: #27ae60;
+        font-weight: 600;
+    }
+    .performance-negative {
+        color: #e74c3c;
+        font-weight: 600;
+    }
+    .ai-analysis {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #3498db;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-@dataclass
-class Question:
-    id: int
-    text: str
-    options: List[Dict[str, any]]
-
-@dataclass
-class RiskProfile:
-    score: int
-    profile_name: str
-    risk_aversion_a: float
-    description: str
-    color: str
-
-@dataclass
-class Portfolio:
-    name: str
-    composition: Dict[str, float]
-    expected_return: float
-    std_deviation: float
-    variance: float
-    sharpe_ratio: float
-    characteristics: str
-
-class RiskToleranceCalculator:
+class QuestionnaireSystem:
     def __init__(self):
         self.questions = [
-            Question(
-                id=1,
-                text="Solo 60 días después de invertir dinero, el precio cae 20%. Asumiendo que los fundamentos no han cambiado, ¿qué harías?",
-                options=[
-                    {"value": "a", "text": "Vender para evitar más preocupaciones y probar algo diferente", "points": 1},
-                    {"value": "b", "text": "No hacer nada y esperar a que la inversión se recupere", "points": 2},
-                    {"value": "c", "text": "Comprar más. Era una buena inversión antes; ahora es una inversión barata también", "points": 3}
+            {
+                "id": 1,
+                "text": "¿Cuál es tu experiencia previa en inversiones?",
+                "options": [
+                    {"text": "Sin experiencia", "value": 1},
+                    {"text": "Experiencia básica (menos de 2 años)", "value": 3},
+                    {"text": "Experiencia moderada (2-5 años)", "value": 6},
+                    {"text": "Experiencia avanzada (más de 5 años)", "value": 9}
                 ]
-            ),
-            Question(
-                id=2,
-                text="Tu inversión cayó 20%, pero es parte de un portafolio para objetivos a 5 años. ¿Qué harías?",
-                options=[
-                    {"value": "a", "text": "Vender", "points": 1},
-                    {"value": "b", "text": "No hacer nada", "points": 2},
-                    {"value": "c", "text": "Comprar más", "points": 3}
+            },
+            {
+                "id": 2,
+                "text": "¿Cuál es tu horizonte temporal de inversión?",
+                "options": [
+                    {"text": "Menos de 1 año", "value": 1},
+                    {"text": "1-3 años", "value": 3},
+                    {"text": "3-10 años", "value": 6},
+                    {"text": "Más de 10 años", "value": 10}
                 ]
-            ),
-            Question(
-                id=3,
-                text="¿Qué harías si el objetivo fuera a 15 años?",
-                options=[
-                    {"value": "a", "text": "Vender", "points": 1},
-                    {"value": "b", "text": "No hacer nada", "points": 2},
-                    {"value": "c", "text": "Comprar más", "points": 3}
+            },
+            {
+                "id": 3,
+                "text": "Si tu inversión perdiera 20% en un mes, ¿qué harías?",
+                "options": [
+                    {"text": "Vendería inmediatamente", "value": 1},
+                    {"text": "Me preocuparía pero mantendría", "value": 4},
+                    {"text": "Mantendría sin preocupación", "value": 7},
+                    {"text": "Compraría más aprovechando la caída", "value": 10}
                 ]
-            ),
-            Question(
-                id=4,
-                text="¿Qué harías si el objetivo fuera a 30 años?",
-                options=[
-                    {"value": "a", "text": "Vender", "points": 1},
-                    {"value": "b", "text": "No hacer nada", "points": 2},
-                    {"value": "c", "text": "Comprar más", "points": 3}
+            },
+            {
+                "id": 4,
+                "text": "¿Qué porcentaje de tus ingresos anuales representaría esta inversión?",
+                "options": [
+                    {"text": "Más del 50%", "value": 1},
+                    {"text": "20-50%", "value": 4},
+                    {"text": "10-20%", "value": 7},
+                    {"text": "Menos del 10%", "value": 10}
                 ]
-            ),
-            Question(
-                id=5,
-                text="El precio de tu inversión para el retiro sube 25% un mes después de comprarla. Los fundamentos no han cambiado. Después de celebrar, ¿qué haces?",
-                options=[
-                    {"value": "a", "text": "Venderla y asegurar las ganancias", "points": 1},
-                    {"value": "b", "text": "Mantenerla y esperar más ganancias", "points": 2},
-                    {"value": "c", "text": "Comprar más; podría subir más", "points": 3}
+            },
+            {
+                "id": 5,
+                "text": "¿Cuál es tu principal objetivo de inversión?",
+                "options": [
+                    {"text": "Preservar capital", "value": 1},
+                    {"text": "Ingresos estables", "value": 3},
+                    {"text": "Crecimiento moderado", "value": 6},
+                    {"text": "Crecimiento agresivo", "value": 10}
                 ]
-            ),
-            Question(
-                id=6,
-                text="Estás invirtiendo para el retiro en 15 años. ¿Qué preferirías hacer?",
-                options=[
-                    {"value": "a", "text": "Invertir en un fondo del mercado monetario, renunciando a grandes ganancias pero asegurando el capital", "points": 1},
-                    {"value": "b", "text": "Invertir 50-50 en fondos de bonos y acciones, buscando crecimiento con algo de protección", "points": 2},
-                    {"value": "c", "text": "Invertir en fondos de crecimiento agresivo que fluctúen significativamente pero con potencial de grandes ganancias", "points": 3}
+            },
+            {
+                "id": 6,
+                "text": "¿Cómo reaccionarías ante volatilidad diaria en tu portafolio?",
+                "options": [
+                    {"text": "No podría tolerarla", "value": 1},
+                    {"text": "Me causaría estrés", "value": 3},
+                    {"text": "La aceptaría con reservas", "value": 6},
+                    {"text": "No me afectaría", "value": 10}
                 ]
-            ),
-            Question(
-                id=7,
-                text="¡Acabas de ganar un gran premio! Pero ¿cuál eliges?",
-                options=[
-                    {"value": "a", "text": "$2,000 en efectivo", "points": 1},
-                    {"value": "b", "text": "50% de probabilidad de ganar $5,000", "points": 2},
-                    {"value": "c", "text": "20% de probabilidad de ganar $15,000", "points": 3}
+            },
+            {
+                "id": 7,
+                "text": "¿Qué nivel de pérdida máxima podrías aceptar en un año?",
+                "options": [
+                    {"text": "0-5%", "value": 1},
+                    {"text": "5-15%", "value": 4},
+                    {"text": "15-30%", "value": 7},
+                    {"text": "Más del 30%", "value": 10}
                 ]
-            )
+            },
+            {
+                "id": 8,
+                "text": "¿Prefieres inversiones que conozcas bien o explorar nuevas oportunidades?",
+                "options": [
+                    {"text": "Solo inversiones conocidas", "value": 1},
+                    {"text": "Principalmente conocidas", "value": 4},
+                    {"text": "Mezcla equilibrada", "value": 6},
+                    {"text": "Explorar nuevas oportunidades", "value": 10}
+                ]
+            },
+            {
+                "id": 9,
+                "text": "¿Con qué frecuencia planeas revisar tu portafolio?",
+                "options": [
+                    {"text": "Diariamente", "value": 2},
+                    {"text": "Semanalmente", "value": 4},
+                    {"text": "Mensualmente", "value": 7},
+                    {"text": "Trimestralmente o menos", "value": 10}
+                ]
+            },
+            {
+                "id": 10,
+                "text": "¿Cómo describirías tu situación financiera actual?",
+                "options": [
+                    {"text": "Necesito estos fondos pronto", "value": 1},
+                    {"text": "Tengo algunas reservas", "value": 4},
+                    {"text": "Tengo reservas adecuadas", "value": 7},
+                    {"text": "Tengo abundantes reservas", "value": 10}
+                ]
+            }
         ]
-        
-        self.risk_profiles = {
-            "conservador": RiskProfile(
-                score=(7, 14),
-                profile_name="Inversionista Conservador",
-                risk_aversion_a=5.0,
-                description="Prefiere seguridad y estabilidad. Evita riesgos altos y busca preservar el capital.",
-                color="#dc3545"
-            ),
-            "moderado": RiskProfile(
-                score=(15, 19),
-                profile_name="Inversionista Moderado",
-                risk_aversion_a=3.5,
-                description="Busca un equilibrio entre riesgo y rendimiento. Acepta cierta volatilidad por mejores retornos.",
-                color="#ffc107"
-            ),
-            "agresivo": RiskProfile(
-                score=(20, 21),
-                profile_name="Inversionista Agresivo",
-                risk_aversion_a=2.0,
-                description="Tiene alta tolerancia al riesgo. Busca maximizar rendimientos a largo plazo.",
-                color="#28a745"
-            )
-        }
 
+    def calculate_risk_score(self, answers):
+        total = sum(answers.values())
+        return min(10, max(1, total / 10))
+
+class PortfolioManager:
+    def __init__(self):
         self.portfolios = {
-            "conservador": Portfolio(
-                name="Portafolio Conservador",
-                composition={
-                    "Bonos del Tesoro (TLT)": 20,
-                    "Bonos Corporativos (LQD)": 20,
-                    "Microsoft (MSFT)": 15,
-                    "Johnson & Johnson (JNJ)": 10,
-                    "The Coca-Cola (KO)": 10,
-                    "Procter & Gamble (PG)": 10,
-                    "Vanguard High Dividend (VYM)": 10,
-                    "Apple (AAPL)": 5
-                },
-                expected_return=5.8,
-                std_deviation=8.4,
-                variance=0.71,
-                sharpe_ratio=0.45,
-                characteristics="Alta proporción de bonos (40%). Acciones de baja beta. Sectores defensivos. Ideal para preservación de capital."
-            ),
-            "moderado": Portfolio(
-                name="Portafolio Moderado",
-                composition={
-                    "Bonos Corporativos (LQD)": 15,
-                    "Bonos del Tesoro (IEF)": 10,
-                    "Apple (AAPL)": 15,
-                    "Microsoft (MSFT)": 15,
-                    "Alphabet (GOOGL)": 10,
-                    "Eli Lilly (LLY)": 10,
-                    "JPMorgan Chase (JPM)": 8,
-                    "Vanguard Total Stock (VTI)": 7,
-                    "iShares MSCI EAFE (EFA)": 5,
-                    "Amazon (AMZN)": 5
-                },
-                expected_return=8.7,
-                std_deviation=14.6,
-                variance=2.13,
-                sharpe_ratio=0.53,
-                characteristics="Balance 25% renta fija, 75% renta variable. Diversificación sectorial. Exposición internacional limitada."
-            ),
-            "agresivo": Portfolio(
-                name="Portafolio Agresivo",
-                composition={
-                    "NVIDIA (NVDA)": 25,
-                    "Tesla (TSLA)": 15,
-                    "Invesco QQQ (QQQ)": 15,
-                    "Apple (AAPL)": 10,
-                    "ARK Innovation (ARKK)": 10,
-                    "Eli Lilly (LLY)": 8,
-                    "AMD": 7,
-                    "Global X Lithium (LIT)": 5,
-                    "Bitcoin ETF (BITO)": 3,
-                    "iShares Emerging Markets (EEM)": 2
-                },
-                expected_return=13.5,
-                std_deviation=28.2,
-                variance=7.95,
-                sharpe_ratio=0.44,
-                characteristics="Alto crecimiento y tecnología. Exposición a criptomonedas. Mercados emergentes. Alta volatilidad."
-            )
+            "conservative": {
+                "name": "Portafolio Conservador",
+                "risk_range": (1, 3),
+                "expected_return": 5.8,
+                "std_deviation": 8.4,
+                "assets": {
+                    "TLT": {
+                        "name": "iShares 20+ Year Treasury Bond ETF",
+                        "percentage": 25,
+                        "description": "Bonos del Tesoro a largo plazo. Proporciona estabilidad y protección contra la inflación.",
+                        "sector": "Renta Fija",
+                        "risk_level": "Bajo"
+                    },
+                    "LQD": {
+                        "name": "iShares Investment Grade Corporate Bond ETF",
+                        "percentage": 20,
+                        "description": "Bonos corporativos de alta calidad. Ofrece rendimientos superiores a los bonos del gobierno.",
+                        "sector": "Renta Fija",
+                        "risk_level": "Bajo-Medio"
+                    },
+                    "JNJ": {
+                        "name": "Johnson & Johnson",
+                        "percentage": 15,
+                        "description": "Líder global en productos farmacéuticos y de consumo. Dividend aristocrat con historial sólido.",
+                        "sector": "Salud",
+                        "risk_level": "Bajo"
+                    },
+                    "PG": {
+                        "name": "Procter & Gamble",
+                        "percentage": 15,
+                        "description": "Empresa de bienes de consumo básico. Marcas reconocidas mundialmente y dividendos estables.",
+                        "sector": "Consumo Básico",
+                        "risk_level": "Bajo"
+                    },
+                    "KO": {
+                        "name": "The Coca-Cola Company",
+                        "percentage": 10,
+                        "description": "Gigante global de bebidas. Flujo de efectivo predecible y presencia internacional.",
+                        "sector": "Consumo Básico",
+                        "risk_level": "Bajo"
+                    },
+                    "VYM": {
+                        "name": "Vanguard High Dividend Yield ETF",
+                        "percentage": 10,
+                        "description": "ETF que rastrea acciones de alta rentabilidad por dividendo. Diversificación sectorial.",
+                        "sector": "Diversificado",
+                        "risk_level": "Medio"
+                    },
+                    "MSFT": {
+                        "name": "Microsoft Corporation",
+                        "percentage": 5,
+                        "description": "Líder en software y servicios en la nube. Crecimiento estable y dividendos crecientes.",
+                        "sector": "Tecnología",
+                        "risk_level": "Medio"
+                    }
+                }
+            },
+            "moderate": {
+                "name": "Portafolio Moderado",
+                "risk_range": (4, 7),
+                "expected_return": 8.7,
+                "std_deviation": 14.6,
+                "assets": {
+                    "AAPL": {
+                        "name": "Apple Inc.",
+                        "percentage": 20,
+                        "description": "Empresa tecnológica líder en dispositivos móviles y servicios. Sólido flujo de efectivo.",
+                        "sector": "Tecnología",
+                        "risk_level": "Medio"
+                    },
+                    "MSFT": {
+                        "name": "Microsoft Corporation",
+                        "percentage": 15,
+                        "description": "Dominante en software empresarial y computación en la nube. Crecimiento consistente.",
+                        "sector": "Tecnología",
+                        "risk_level": "Medio"
+                    },
+                    "LQD": {
+                        "name": "iShares Investment Grade Corporate Bond ETF",
+                        "percentage": 15,
+                        "description": "Bonos corporativos de grado de inversión para estabilidad del portafolio.",
+                        "sector": "Renta Fija",
+                        "risk_level": "Bajo-Medio"
+                    },
+                    "GOOGL": {
+                        "name": "Alphabet Inc.",
+                        "percentage": 12,
+                        "description": "Conglomerado tecnológico con dominio en búsquedas y publicidad digital.",
+                        "sector": "Tecnología",
+                        "risk_level": "Medio-Alto"
+                    },
+                    "JPM": {
+                        "name": "JPMorgan Chase & Co.",
+                        "percentage": 10,
+                        "description": "Banco de inversión líder. Beneficiario de entornos de tasas de interés altas.",
+                        "sector": "Financiero",
+                        "risk_level": "Medio"
+                    },
+                    "LLY": {
+                        "name": "Eli Lilly and Company",
+                        "percentage": 10,
+                        "description": "Farmacéutica con pipeline robusto, especialmente en diabetes y oncología.",
+                        "sector": "Salud",
+                        "risk_level": "Medio"
+                    },
+                    "VTI": {
+                        "name": "Vanguard Total Stock Market ETF",
+                        "percentage": 8,
+                        "description": "Exposición amplia al mercado accionario estadounidense completo.",
+                        "sector": "Diversificado",
+                        "risk_level": "Medio"
+                    },
+                    "IEF": {
+                        "name": "iShares 7-10 Year Treasury Bond ETF",
+                        "percentage": 5,
+                        "description": "Bonos del Tesoro de plazo medio para diversificación de renta fija.",
+                        "sector": "Renta Fija",
+                        "risk_level": "Bajo"
+                    },
+                    "EFA": {
+                        "name": "iShares MSCI EAFE ETF",
+                        "percentage": 5,
+                        "description": "Exposición a mercados desarrollados internacionales para diversificación geográfica.",
+                        "sector": "Internacional",
+                        "risk_level": "Medio"
+                    }
+                }
+            },
+            "aggressive": {
+                "name": "Portafolio Agresivo",
+                "risk_range": (8, 10),
+                "expected_return": 13.5,
+                "std_deviation": 28.2,
+                "assets": {
+                    "NVDA": {
+                        "name": "NVIDIA Corporation",
+                        "percentage": 25,
+                        "description": "Líder en GPUs y computación de IA. Beneficiario directo del boom de inteligencia artificial.",
+                        "sector": "Tecnología",
+                        "risk_level": "Alto"
+                    },
+                    "TSLA": {
+                        "name": "Tesla, Inc.",
+                        "percentage": 20,
+                        "description": "Pioneer en vehículos eléctricos y energía sostenible. Alto potencial de crecimiento.",
+                        "sector": "Automotriz/Energía",
+                        "risk_level": "Alto"
+                    },
+                    "QQQ": {
+                        "name": "Invesco QQQ Trust",
+                        "percentage": 15,
+                        "description": "ETF que rastrea el NASDAQ-100. Concentrado en tecnología de crecimiento.",
+                        "sector": "Tecnología",
+                        "risk_level": "Alto"
+                    },
+                    "ARKK": {
+                        "name": "ARK Innovation ETF",
+                        "percentage": 12,
+                        "description": "ETF enfocado en empresas innovadoras disruptivas y tecnologías emergentes.",
+                        "sector": "Innovación",
+                        "risk_level": "Muy Alto"
+                    },
+                    "AMD": {
+                        "name": "Advanced Micro Devices",
+                        "percentage": 10,
+                        "description": "Competidor clave en procesadores y GPUs. Beneficiario del crecimiento en computación.",
+                        "sector": "Tecnología",
+                        "risk_level": "Alto"
+                    },
+                    "LLY": {
+                        "name": "Eli Lilly and Company",
+                        "percentage": 8,
+                        "description": "Farmacéutica innovadora con fuerte pipeline en tratamientos revolucionarios.",
+                        "sector": "Salud",
+                        "risk_level": "Medio-Alto"
+                    },
+                    "LIT": {
+                        "name": "Global X Lithium & Battery Tech ETF",
+                        "percentage": 5,
+                        "description": "ETF especializado en tecnología de baterías y litio para vehículos eléctricos.",
+                        "sector": "Materiales/Energía",
+                        "risk_level": "Alto"
+                    },
+                    "BITO": {
+                        "name": "ProShares Bitcoin Strategy ETF",
+                        "percentage": 3,
+                        "description": "Exposición a Bitcoin a través de futuros. Activo alternativo de alto riesgo.",
+                        "sector": "Criptomonedas",
+                        "risk_level": "Muy Alto"
+                    },
+                    "EEM": {
+                        "name": "iShares MSCI Emerging Markets ETF",
+                        "percentage": 2,
+                        "description": "Exposición a mercados emergentes con alto potencial de crecimiento.",
+                        "sector": "Emergentes",
+                        "risk_level": "Alto"
+                    }
+                }
+            }
         }
 
-    def calculate_score(self, answers: Dict[int, str]) -> Tuple[int, RiskProfile]:
-        total_score = 0
-        breakdown = {"a": 0, "b": 0, "c": 0}
-        
-        for question_id, answer in answers.items():
-            question = next(q for q in self.questions if q.id == question_id)
-            option = next(opt for opt in question.options if opt["value"] == answer)
-            total_score += option["points"]
-            breakdown[answer] += 1
-        
-        for profile in self.risk_profiles.values():
-            if isinstance(profile.score, tuple):
-                if profile.score[0] <= total_score <= profile.score[1]:
-                    return total_score, profile, breakdown
-        
-        return total_score, self.risk_profiles["conservador"], breakdown
+    def get_portfolio_by_risk_score(self, risk_score):
+        for portfolio_key, portfolio in self.portfolios.items():
+            min_risk, max_risk = portfolio["risk_range"]
+            if min_risk <= risk_score <= max_risk:
+                return portfolio
+        return self.portfolios["moderate"]
 
-    def get_recommended_portfolio(self, risk_aversion_a: float) -> Portfolio:
-        if risk_aversion_a >= 4.5:
-            return self.portfolios["conservador"]
-        elif risk_aversion_a >= 3.0:
-            return self.portfolios["moderado"]
-        else:
-            return self.portfolios["agresivo"]
+    def generate_performance_data(self, portfolio, days=365):
+        np.random.seed(42)
+        dates = [datetime.now() - timedelta(days=days-i) for i in range(days)]
+        
+        expected_daily_return = portfolio["expected_return"] / 100 / 365
+        daily_volatility = portfolio["std_deviation"] / 100 / np.sqrt(365)
+        
+        returns = np.random.normal(expected_daily_return, daily_volatility, days)
+        cumulative_returns = np.cumprod(1 + returns)
+        
+        portfolio_values = cumulative_returns * 100
+        
+        asset_data = {}
+        for asset_code, asset_info in portfolio["assets"].items():
+            asset_vol = daily_volatility * (0.8 + 0.4 * np.random.random())
+            asset_returns = np.random.normal(expected_daily_return * 1.1, asset_vol, days)
+            asset_cumulative = np.cumprod(1 + asset_returns)
+            asset_values = asset_cumulative * 100
+            
+            asset_data[asset_code] = {
+                "values": asset_values,
+                "current_change": (asset_values[-1] - asset_values[-2]) / asset_values[-2] * 100,
+                "ytd_change": (asset_values[-1] - asset_values[0]) / asset_values[0] * 100
+            }
+        
+        return {
+            "dates": dates,
+            "portfolio_values": portfolio_values,
+            "asset_data": asset_data,
+            "current_portfolio_change": (portfolio_values[-1] - portfolio_values[-2]) / portfolio_values[-2] * 100,
+            "ytd_portfolio_change": (portfolio_values[-1] - portfolio_values[0]) / portfolio_values[0] * 100
+        }
 
-def get_claude_analysis(profile, portfolio):
+def get_claude_analysis(risk_score, portfolio):
     try:
         client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
         
+        asset_list = ", ".join([f"{code} ({info['percentage']}%)" for code, info in portfolio["assets"].items()])
+        
         prompt = f"""
-        Basándote en la teoría moderna de portafolios y el documento de Markowitz sobre asignación de capital, analiza la siguiente información del inversionista:
+        Como experto en gestión de portafolios y teoría moderna de inversiones, analiza el siguiente perfil:
 
         PERFIL DEL INVERSIONISTA:
-        - Tipo: {profile.profile_name}
-        - Coeficiente de aversión al riesgo (A): {profile.risk_aversion_a}
-        - Descripción: {profile.description}
+        - Puntuación de tolerancia al riesgo: {risk_score:.1f}/10
+        - Portafolio recomendado: {portfolio["name"]}
+        - Rendimiento esperado: {portfolio["expected_return"]}%
+        - Desviación estándar: {portfolio["std_deviation"]}%
+        - Composición: {asset_list}
 
-        PORTAFOLIO RECOMENDADO:
-        - Nombre: {portfolio.name}
-        - Rendimiento esperado: {portfolio.expected_return}%
-        - Desviación estándar: {portfolio.std_deviation}%
-        - Ratio de Sharpe: {portfolio.sharpe_ratio}
-        - Características: {portfolio.characteristics}
+        Proporciona un análisis profesional de máximo 250 palabras que incluya:
+        1. Justificación de por qué este portafolio es adecuado para el perfil de riesgo
+        2. Ventajas principales de la composición seleccionada
+        3. Riesgos a considerar
+        4. Recomendaciones de seguimiento
 
-        Proporciona un análisis conciso (máximo 200 palabras) que incluya:
-        1. Por qué este portafolio es adecuado para su coeficiente A
-        2. Ventajas y riesgos principales
-        3. Recomendación de seguimiento
-
-        Usa un tono profesional pero accesible.
+        Usa un tono profesional y técnico apropiado para un asesor financiero.
         """
         
         response = client.messages.create(
             model="claude-3-haiku-20240307",
-            max_tokens=300,
+            max_tokens=400,
             messages=[{"role": "user", "content": prompt}]
         )
         
         return response.content[0].text
     
     except Exception as e:
-        return f"Análisis no disponible temporalmente. Error: {str(e)}"
+        return f"El análisis personalizado no está disponible en este momento. El portafolio ha sido seleccionado usando criterios cuantitativos basados en la teoría moderna de portafolios y su puntuación de riesgo de {risk_score:.1f}/10."
 
-def main():
-    st.markdown('<h1 class="main-header">📈 Calculadora de Tolerancia al Riesgo</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Determina tu coeficiente de aversión al riesgo y recibe tu portafolio personalizado</p>', unsafe_allow_html=True)
+def page_questionnaire():
+    st.markdown('<h1 class="main-header">Evaluación de Perfil de Riesgo</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Complete el cuestionario para determinar su perfil de inversión óptimo</p>', unsafe_allow_html=True)
     
-    calculator = RiskToleranceCalculator()
-    
-    with st.sidebar:
-        st.header("ℹ️ Información")
-        st.markdown("""
-        ### ¿Qué es el Coeficiente A?
-        
-        El coeficiente de aversión al riesgo (A) determina tu portafolio ideal:
-        
-        - **A = 5.0**: Conservador
-        - **A = 3.5**: Moderado  
-        - **A = 2.0**: Agresivo
-        
-        ### Análisis con IA
-        Utilizamos Claude AI para analizar tu perfil y recomendar el portafolio óptimo basado en la teoría de Markowitz.
-        """)
-
-    st.subheader("Cuestionario de Tolerancia al Riesgo")
-    st.markdown("Responde las siguientes preguntas para determinar tu perfil de riesgo:")
-    
+    questionnaire = QuestionnaireSystem()
     answers = {}
     
-    for i, question in enumerate(calculator.questions):
-        st.markdown(f'<div class="question-container">', unsafe_allow_html=True)
-        st.markdown(f"**Pregunta {i+1}:** {question.text}")
+    for question in questionnaire.questions:
+        st.markdown(f'<div class="question-card">', unsafe_allow_html=True)
+        st.markdown(f"**Pregunta {question['id']}:** {question['text']}")
         
-        options_text = [f"{opt['value'].upper()}. {opt['text']}" for opt in question.options]
+        options = [opt["text"] for opt in question["options"]]
         selected = st.radio(
-            f"Selecciona tu respuesta:",
-            options=options_text,
-            key=f"q_{question.id}",
+            "Seleccione su respuesta:",
+            options,
+            key=f"q_{question['id']}",
             index=None
         )
         
         if selected:
-            answers[question.id] = selected[0].lower()
+            for opt in question["options"]:
+                if opt["text"] == selected:
+                    answers[question["id"]] = opt["value"]
+                    break
         
         st.markdown('</div>', unsafe_allow_html=True)
     
-    if len(answers) == len(calculator.questions):
-        if st.button("🎯 Obtener Mi Portafolio Recomendado", type="primary", use_container_width=True):
-            score, profile, breakdown = calculator.calculate_score(answers)
-            recommended_portfolio = calculator.get_recommended_portfolio(profile.risk_aversion_a)
-            
-            st.markdown('<div class="result-container">', unsafe_allow_html=True)
-            st.subheader("🎯 Tu Perfil de Inversionista")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Puntuación", f"{score} puntos")
-            with col2:
-                st.metric("Perfil", profile.profile_name.replace("Inversionista ", ""))
-            with col3:
-                st.metric("Coeficiente A", f"{profile.risk_aversion_a}")
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown('<div class="portfolio-container">', unsafe_allow_html=True)
-            st.subheader(f"📊 {recommended_portfolio.name}")
-            
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                composition_df = pd.DataFrame([
-                    {"Activo": asset, "Porcentaje": percentage}
-                    for asset, percentage in recommended_portfolio.composition.items()
-                ])
-                
-                fig = px.pie(composition_df, values='Porcentaje', names='Activo',
-                           title="Composición del Portafolio")
-                st.plotly_chart(fig, use_container_width=True)
-            
-            with col2:
-                st.metric("Rendimiento Esperado", f"{recommended_portfolio.expected_return}%")
-                st.metric("Desviación Estándar", f"{recommended_portfolio.std_deviation}%")
-                st.metric("Varianza", f"{recommended_portfolio.variance}%")
-                st.metric("Ratio de Sharpe", f"{recommended_portfolio.sharpe_ratio}")
-            
-            st.markdown("### 🎯 Características del Portafolio")
-            st.write(recommended_portfolio.characteristics)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            with st.spinner("🤖 Generando análisis personalizado con IA..."):
-                claude_analysis = get_claude_analysis(profile, recommended_portfolio)
-                
-                st.markdown("### 🤖 Análisis Personalizado")
-                st.markdown(f"""
-                <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #4a90e2;">
-                    {claude_analysis}
-                </div>
-                """, unsafe_allow_html=True)
+    if len(answers) == len(questionnaire.questions):
+        if st.button("Analizar Perfil de Riesgo", type="primary", use_container_width=True):
+            risk_score = questionnaire.calculate_risk_score(answers)
+            st.session_state.risk_score = risk_score
+            st.session_state.page = "results"
+            st.rerun()
     else:
-        st.info(f"📝 Completa todas las preguntas ({len(answers)}/{len(calculator.questions)})")
+        progress = len(answers) / len(questionnaire.questions)
+        st.progress(progress)
+        st.info(f"Progreso: {len(answers)}/{len(questionnaire.questions)} preguntas completadas")
+
+def page_results():
+    if "risk_score" not in st.session_state:
+        st.warning("Complete primero el cuestionario de evaluación")
+        return
+    
+    st.markdown('<h1 class="main-header">Resultado de Evaluación</h1>', unsafe_allow_html=True)
+    
+    portfolio_manager = PortfolioManager()
+    portfolio = portfolio_manager.get_portfolio_by_risk_score(st.session_state.risk_score)
+    
+    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Puntuación de Riesgo", f"{st.session_state.risk_score:.1f}/10")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Portafolio Recomendado", portfolio["name"])
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Rendimiento Esperado", f"{portfolio['expected_return']}%")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Análisis con IA
+    with st.spinner("Generando análisis personalizado..."):
+        claude_analysis = get_claude_analysis(st.session_state.risk_score, portfolio)
+        
+        st.markdown('<div class="ai-analysis">', unsafe_allow_html=True)
+        st.subheader("Análisis Personalizado")
+        st.markdown(claude_analysis)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.subheader("Composición del Portafolio")
+    
+    for asset_code, asset_info in portfolio["assets"].items():
+        st.markdown(f'<div class="asset-info">', unsafe_allow_html=True)
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            st.markdown(f"**{asset_info['name']} ({asset_code})**")
+            st.markdown(f"*{asset_info['description']}*")
+            st.markdown(f"Sector: {asset_info['sector']} | Nivel de Riesgo: {asset_info['risk_level']}")
+        
+        with col2:
+            st.metric("Asignación", f"{asset_info['percentage']}%")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.subheader("Configuración de Inversión")
+    
+    investment_amount = st.number_input(
+        "Monto a invertir (USD)",
+        min_value=1000,
+        max_value=10000000,
+        value=10000,
+        step=1000,
+        format="%d"
+    )
+    
+    if st.button("Proceder con la Inversión", type="primary", use_container_width=True):
+        st.session_state.investment_amount = investment_amount
+        st.session_state.selected_portfolio = portfolio
+        st.session_state.page = "portfolio"
+        st.rerun()
+
+def page_portfolio():
+    if "selected_portfolio" not in st.session_state:
+        st.warning("Configure primero su portafolio en la sección de resultados")
+        return
+    
+    st.markdown('<h1 class="main-header">Monitor de Portafolio</h1>', unsafe_allow_html=True)
+    
+    portfolio = st.session_state.selected_portfolio
+    investment_amount = st.session_state.investment_amount
+    portfolio_manager = PortfolioManager()
+    
+    performance_data = portfolio_manager.generate_performance_data(portfolio)
+    
+    # Métricas principales
+    current_value = investment_amount * (performance_data["portfolio_values"][-1] / 100)
+    total_return = current_value - investment_amount
+    total_return_pct = (current_value / investment_amount - 1) * 100
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Valor Actual", f"${current_value:,.2f}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Ganancia/Pérdida", f"${total_return:,.2f}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        change_class = "performance-positive" if total_return_pct >= 0 else "performance-negative"
+        st.markdown(f'<div class="{change_class}">Rendimiento Total: {total_return_pct:.2f}%</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        daily_change_class = "performance-positive" if performance_data["current_portfolio_change"] >= 0 else "performance-negative"
+        st.markdown(f'<div class="{daily_change_class}">Cambio Diario: {performance_data["current_portfolio_change"]:.2f}%</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Gráfico de rendimiento del portafolio
+    st.subheader("Evolución del Portafolio")
+    
+    portfolio_values_scaled = [investment_amount * (val / 100) for val in performance_data["portfolio_values"]]
+    
+    fig_portfolio = go.Figure()
+    fig_portfolio.add_trace(go.Scatter(
+        x=performance_data["dates"],
+        y=portfolio_values_scaled,
+        mode='lines',
+        name='Valor del Portafolio',
+        line=dict(color='#3498db', width=2)
+    ))
+    
+    fig_portfolio.add_hline(y=investment_amount, line_dash="dash", line_color="gray", 
+                           annotation_text="Inversión Inicial")
+    
+    fig_portfolio.update_layout(
+        title="Evolución del Valor del Portafolio",
+        xaxis_title="Fecha",
+        yaxis_title="Valor (USD)",
+        hovermode='x unified',
+        showlegend=False,
+        height=400
+    )
+    
+    st.plotly_chart(fig_portfolio, use_container_width=True)
+    
+    # Desglose por activos
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Distribución Actual")
+        
+        asset_names = []
+        asset_values = []
+        asset_percentages = []
+        
+        for asset_code, asset_info in portfolio["assets"].items():
+            asset_investment = investment_amount * (asset_info["percentage"] / 100)
+            current_asset_value = asset_investment * (performance_data["asset_data"][asset_code]["values"][-1] / 100)
+            
+            asset_names.append(f"{asset_code}")
+            asset_values.append(current_asset_value)
+            asset_percentages.append(asset_info["percentage"])
+        
+        fig_pie = px.pie(
+            values=asset_values,
+            names=asset_names,
+            title="Valor por Activo"
+        )
+        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+        st.plotly_chart(fig_pie, use_container_width=True)
+    
+    with col2:
+        st.subheader("Rendimiento por Activo")
+        
+        asset_performance_data = []
+        for asset_code, asset_info in portfolio["assets"].items():
+            asset_data = performance_data["asset_data"][asset_code]
+            asset_investment = investment_amount * (asset_info["percentage"] / 100)
+            current_asset_value = asset_investment * (asset_data["values"][-1] / 100)
+            asset_return = current_asset_value - asset_investment
+            
+            asset_performance_data.append({
+                "Activo": asset_code,
+                "Inversión": asset_investment,
+                "Valor Actual": current_asset_value,
+                "Ganancia/Pérdida": asset_return,
+                "Rendimiento %": asset_data["ytd_change"],
+                "Cambio Diario %": asset_data["current_change"]
+            })
+        
+        df_performance = pd.DataFrame(asset_performance_data)
+        
+        st.markdown("### Detalle de Rendimientos")
+        for _, row in df_performance.iterrows():
+            with st.expander(f"{row['Activo']} - {portfolio['assets'][row['Activo']]['name']}"):
+                col_a, col_b, col_c = st.columns(3)
+                with col_a:
+                    st.metric("Valor Actual", f"${row['Valor Actual']:,.2f}")
+                with col_b:
+                    st.metric("Ganancia/Pérdida", f"${row['Ganancia/Pérdida']:,.2f}")
+                with col_c:
+                    change_color = "normal" if row['Rendimiento %'] >= 0 else "inverse"
+                    st.metric("Rendimiento", f"{row['Rendimiento %']:.2f}%", 
+                            f"{row['Cambio Diario %']:.2f}% (24h)", delta_color=change_color)
+
+def main():
+    # Navegación
+    if "page" not in st.session_state:
+        st.session_state.page = "questionnaire"
+    
+    with st.sidebar:
+        st.markdown('<div class="sidebar-nav">', unsafe_allow_html=True)
+        st.markdown("**Sistema de Gestión de Portafolios**")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        pages = {
+            "questionnaire": "1. Evaluación de Riesgo",
+            "results": "2. Resultados y Configuración", 
+            "portfolio": "3. Monitor de Portafolio"
+        }
+        
+        for page_key, page_name in pages.items():
+            if st.button(page_name, use_container_width=True, 
+                        type="primary" if st.session_state.page == page_key else "secondary"):
+                st.session_state.page = page_key
+                st.rerun()
+        
+        st.markdown("---")
+        st.markdown("**Información del Sistema**")
+        st.markdown("Basado en la Teoría Moderna de Portafolios")
+        st.markdown("Análisis cuantitativo de riesgo")
+        st.markdown("Diversificación optimizada")
+        st.markdown("Análisis de IA integrado")
+    
+    # Renderizar página actual
+    if st.session_state.page == "questionnaire":
+        page_questionnaire()
+    elif st.session_state.page == "results":
+        page_results()
+    elif st.session_state.page == "portfolio":
+        page_portfolio()
 
 if __name__ == "__main__":
     main()
