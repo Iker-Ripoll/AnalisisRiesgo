@@ -8,7 +8,7 @@ import anthropic
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Portfolio Intelligence",
+    page_title="Encuentra tu Portafolio Ideal",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed"
