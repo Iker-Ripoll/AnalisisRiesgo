@@ -428,22 +428,28 @@ st.markdown("""
         font-weight: 700;
         color: #1d1d1f;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 3rem;
     }
     
     .status-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
     }
     
     .status-card {
         background: rgba(248, 249, 250, 0.8);
         border-radius: 20px;
-        padding: 2rem;
+        padding: 2.5rem 2rem;
         text-align: center;
         border: 1px solid rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
     
     .status-card:hover {
@@ -453,13 +459,14 @@ st.markdown("""
     
     .status-value {
         font-family: 'Inter', sans-serif;
-        font-size: 2.8rem;
+        font-size: 2.4rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.8rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        line-height: 1.2;
     }
     
     .status-label {
@@ -469,6 +476,7 @@ st.markdown("""
         color: #6d6d70;
         text-transform: uppercase;
         letter-spacing: 1px;
+        margin-bottom: 0.5rem;
     }
     
     .status-change {
@@ -1289,7 +1297,7 @@ def page_portfolio():
     </div>
     """, unsafe_allow_html=True)
     
-    # 1. ESTADO DEL PORTAFOLIO GENERAL
+    # 1. ESTADO DEL PORTAFOLIO GENERAL (MEJORADO)
     performance_class = "performance-positive" if total_return_pct >= 0 else "performance-negative"
     daily_class = "performance-positive" if performance_data["current_portfolio_change"] >= 0 else "performance-negative"
     ytd_class = "performance-positive" if performance_data["ytd_portfolio_change"] >= 0 else "performance-negative"
@@ -1376,10 +1384,11 @@ def page_portfolio():
     </div>
     """, unsafe_allow_html=True)
     
-    # 3. GRÁFICA CIRCULAR MODERNA (ESTILO INFOGRAFÍA)
+    # 3. GRÁFICA CIRCULAR MODERNA CON COLORES VIBRANTES
     asset_names = []
     asset_values = []
-    asset_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE']
+    # Colores más vibrantes y menos pastel
+    asset_colors = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#34495E', '#F1C40F']
     
     for i, (asset_code, asset_info) in enumerate(portfolio["assets"].items()):
         asset_investment = investment_amount * (asset_info["percentage"] / 100)
@@ -1396,7 +1405,7 @@ def page_portfolio():
         textposition='auto',
         marker=dict(
             colors=asset_colors[:len(asset_names)],
-            line=dict(color='#FFFFFF', width=3)
+            line=dict(color='#FFFFFF', width=4)
         ),
         textfont=dict(
             family="Inter",
@@ -1409,7 +1418,7 @@ def page_portfolio():
     fig_donut.add_annotation(
         text=f"<b>Total</b><br>${current_value:,.0f}",
         x=0.5, y=0.5,
-        font_size=20,
+        font_size=22,
         font_family="Inter",
         font_color="#1d1d1f",
         showarrow=False
@@ -1445,7 +1454,7 @@ def page_portfolio():
         y=portfolio_values_scaled,
         fill='tonexty',
         mode='none',
-        fillcolor='rgba(102, 126, 234, 0.1)',
+        fillcolor='rgba(52, 152, 219, 0.15)',
         name='Área'
     ))
     
@@ -1456,8 +1465,8 @@ def page_portfolio():
         mode='lines',
         name='Valor del Portafolio',
         line=dict(
-            color='#667eea',
-            width=3,
+            color='#3498DB',
+            width=4,
             shape='spline',
             smoothing=0.3
         ),
@@ -1468,8 +1477,8 @@ def page_portfolio():
     fig_portfolio.add_hline(
         y=investment_amount,
         line_dash="dash",
-        line_color="#8e8e93",
-        line_width=2,
+        line_color="#95A5A6",
+        line_width=3,
         annotation_text="Inversión Inicial",
         annotation_position="top right"
     )
