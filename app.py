@@ -130,7 +130,49 @@ st.markdown("""
     .stRadio > div > label {
         background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(20px);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        border: 2px solid rgba(0, 0, 0, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        width: 100%;
+        max-width: 600px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #1d1d1f;
+        position: relative;
+    }
+    
+    .stRadio > div > label:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Selected radio button styling */
+    .stRadio > div > label[data-baseweb="radio"] > div:first-child > div[data-testid="stMarkdownContainer"] {
+        display: none;
+    }
+    
+    /* Hide default radio button */
+    .stRadio > div > label > div:first-child {
+        display: none !important;
+    }
+    
+    /* Selected state for radio options */
+    .stRadio > div > label:has(input:checked) {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border-color: #667eea;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Alternative approach for selected state */
+    .stRadio div[role="radiogroup"] label[data-baseweb="radio"] {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(0, 0, 0, 0.05);
         border-radius: 16px;
         padding: 1.5rem 2rem;
         width: 100%;
@@ -143,14 +185,17 @@ st.markdown("""
         color: #1d1d1f;
     }
     
-    .stRadio > div > label:hover {
+    .stRadio div[role="radiogroup"] label[data-baseweb="radio"]:hover {
         transform: translateY(-3px);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         border-color: rgba(102, 126, 234, 0.3);
     }
     
-    .stRadio > div > label > div:first-child {
-        display: none;
+    .stRadio div[role="radiogroup"] input[type="radio"]:checked + div {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        border: 2px solid #667eea !important;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.25) !important;
+        transform: translateY(-2px) !important;
     }
     
     /* Primary Button */
@@ -366,6 +411,128 @@ st.markdown("""
         font-weight: 700;
     }
     
+    /* Portfolio Analytics Section */
+    .analytics-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin: 3rem 0;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+    }
+    
+    .analytics-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1d1d1f;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        align-items: start;
+    }
+    
+    .chart-container {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        padding: 1.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .chart-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1d1d1f;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .performance-section {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .performance-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .asset-performance-card {
+        background: rgba(248, 249, 250, 0.8);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .asset-performance-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .asset-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .asset-symbol {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1d1d1f;
+    }
+    
+    .asset-change {
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .asset-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .asset-metric {
+        text-align: center;
+    }
+    
+    .asset-metric-value {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1d1d1f;
+        margin-bottom: 0.25rem;
+    }
+    
+    .asset-metric-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #8e8e93;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
     /* Plotly customization */
     .js-plotly-plot {
         border-radius: 20px;
@@ -418,6 +585,51 @@ st.markdown("""
     .stButton > button:hover {
         transform: translateY(-3px);
         box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Radio button selection fix */
+    div[data-testid="stRadio"] > div {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    div[data-testid="stRadio"] > div > label {
+        background: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(0, 0, 0, 0.05) !important;
+        border-radius: 16px !important;
+        padding: 1.5rem 2rem !important;
+        width: 100% !important;
+        max-width: 600px !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
+        color: #1d1d1f !important;
+    }
+    
+    div[data-testid="stRadio"] > div > label:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+        border-color: rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    div[data-testid="stRadio"] > div > label[data-checked="true"] {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%) !important;
+        border: 2px solid #667eea !important;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.25) !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    div[data-testid="stRadio"] label > div:first-child {
+        display: none !important;
+    }
+    
+    div[data-testid="stRadio"] input[type="radio"] {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1075,67 +1287,100 @@ def page_portfolio():
     
     st.plotly_chart(fig_portfolio, use_container_width=True)
     
-    # Distribución y rendimiento por activos
-    col1, col2 = st.columns(2)
+    # Sección de Analytics mejorada
+    st.markdown("""
+    <div class="main-container">
+        <div class="analytics-container">
+            <div class="analytics-title">Análisis de Portafolio</div>
+            <div class="analytics-grid">
+    """, unsafe_allow_html=True)
     
-    with col1:
-        # Gráfico de distribución
-        asset_names = []
-        asset_values = []
-        
-        for asset_code, asset_info in portfolio["assets"].items():
-            asset_investment = investment_amount * (asset_info["percentage"] / 100)
-            current_asset_value = asset_investment * (performance_data["asset_data"][asset_code]["values"][-1] / 100)
-            
-            asset_names.append(asset_code)
-            asset_values.append(current_asset_value)
-        
-        fig_pie = px.pie(
-            values=asset_values,
-            names=asset_names,
-            title="Distribución por Activo"
-        )
-        
-        fig_pie.update_traces(
-            textposition='inside', 
-            textinfo='percent+label',
-            marker=dict(line=dict(color='#FFFFFF', width=2))
-        )
-        
-        fig_pie.update_layout(
-            showlegend=False,
-            height=400,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family="Inter", size=12),
-            title_font=dict(size=18, color="#1d1d1f")
-        )
-        
-        st.plotly_chart(fig_pie, use_container_width=True)
+    # Primera columna - Distribución
+    asset_names = []
+    asset_values = []
     
-    with col2:
-        # Rendimiento por activo
-        st.markdown("""
-        <h3 style="font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 700; color: #1d1d1f; margin-bottom: 1.5rem;">Rendimiento por Activo</h3>
+    for asset_code, asset_info in portfolio["assets"].items():
+        asset_investment = investment_amount * (asset_info["percentage"] / 100)
+        current_asset_value = asset_investment * (performance_data["asset_data"][asset_code]["values"][-1] / 100)
+        
+        asset_names.append(asset_code)
+        asset_values.append(current_asset_value)
+    
+    fig_pie = px.pie(
+        values=asset_values,
+        names=asset_names,
+        color_discrete_sequence=px.colors.qualitative.Set3
+    )
+    
+    fig_pie.update_traces(
+        textposition='inside', 
+        textinfo='percent+label',
+        marker=dict(line=dict(color='#FFFFFF', width=3)),
+        textfont_size=12
+    )
+    
+    fig_pie.update_layout(
+        showlegend=False,
+        height=400,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family="Inter", size=12),
+        margin=dict(t=40, b=40, l=40, r=40)
+    )
+    
+    st.markdown("""
+                <div class="chart-container">
+                    <div class="chart-title">Distribución por Activo</div>
+    """, unsafe_allow_html=True)
+    
+    st.plotly_chart(fig_pie, use_container_width=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Segunda columna - Rendimiento por activo
+    st.markdown("""
+                <div class="performance-section">
+                    <div class="performance-title">Rendimiento por Activo</div>
+    """, unsafe_allow_html=True)
+    
+    for asset_code, asset_info in portfolio["assets"].items():
+        asset_data = performance_data["asset_data"][asset_code]
+        asset_investment = investment_amount * (asset_info["percentage"] / 100)
+        current_asset_value = asset_investment * (asset_data["values"][-1] / 100)
+        asset_return = current_asset_value - asset_investment
+        
+        change_class = "performance-positive" if asset_data["ytd_change"] >= 0 else "performance-negative"
+        daily_change_class = "performance-positive" if asset_data["current_change"] >= 0 else "performance-negative"
+        
+        st.markdown(f"""
+                    <div class="asset-performance-card">
+                        <div class="asset-header">
+                            <div class="asset-symbol">{asset_code}</div>
+                            <div class="asset-change {change_class}">{asset_data['ytd_change']:+.2f}%</div>
+                        </div>
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">${current_asset_value:,.0f}</div>
+                                <div class="asset-metric-label">Valor Actual</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value ${asset_return:+,.0f}</div>
+                                <div class="asset-metric-label">Ganancia/Pérdida</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <span style="font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #8e8e93;">24h: </span>
+                            <span class="{daily_change_class}" style="font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600;">{asset_data['current_change']:+.2f}%</span>
+                        </div>
+                    </div>
         """, unsafe_allow_html=True)
-        
-        for asset_code, asset_info in portfolio["assets"].items():
-            asset_data = performance_data["asset_data"][asset_code]
-            asset_investment = investment_amount * (asset_info["percentage"] / 100)
-            current_asset_value = asset_investment * (asset_data["values"][-1] / 100)
-            asset_return = current_asset_value - asset_investment
-            
-            change_class = "performance-positive" if asset_data["ytd_change"] >= 0 else "performance-negative"
-            
-            with st.expander(f"{asset_code} - {asset_info['name']}", expanded=False):
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.metric("Valor Actual", f"${current_asset_value:,.0f}")
-                    st.metric("Inversión", f"${asset_investment:,.0f}")
-                with col_b:
-                    st.metric("Ganancia/Pérdida", f"${asset_return:+,.0f}")
-                    st.metric("Rendimiento", f"{asset_data['ytd_change']:+.2f}%", 
-                            f"{asset_data['current_change']:+.2f}% (24h)")
+    
+    st.markdown("""
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 def main():
     # Inicializar navegación
