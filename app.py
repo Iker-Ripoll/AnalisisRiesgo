@@ -8,88 +8,416 @@ import anthropic
 
 # Configuración de la página
 st.set_page_config(
-    page_title="Sistema de Gestión de Portafolios",
-    page_icon="📊",
+    page_title="Portfolio Intelligence",
+    page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Estilos CSS profesionales
+# Estilos CSS estilo Apple
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 2.8rem;
-        color: #2c3e50;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        text-align: center;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
     }
-    .sub-header {
-        font-size: 1.1rem;
-        color: #7f8c8d;
-        text-align: center;
-        margin-bottom: 2rem;
-        font-weight: 400;
+    
+    /* Header Navigation */
+    .nav-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 0;
+        margin: -1rem -1rem 3rem -1rem;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
     }
-    .question-card {
-        background: #ffffff;
-        border: 1px solid #e8e9ea;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    
+    .nav-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 2rem;
     }
-    .result-card {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 2rem;
-        margin: 1.5rem 0;
+    
+    .nav-item {
+        display: inline-block;
+        margin: 0 2rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        background: transparent;
     }
-    .portfolio-card {
-        background: #ffffff;
-        border: 1px solid #e8e9ea;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .metric-container {
-        background: #ffffff;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-        border: 1px solid #e8e9ea;
-    }
-    .asset-info {
-        background: #f8f9fa;
-        border-left: 4px solid #3498db;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-radius: 0 4px 4px 0;
-    }
-    .sidebar-nav {
-        background: #2c3e50;
+    
+    .nav-item.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 1rem;
-        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+    
+    .nav-item:not(.active) {
+        color: #8e8e93;
+        background: rgba(142, 142, 147, 0.1);
+    }
+    
+    .nav-item:not(.active):hover {
+        background: rgba(142, 142, 147, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Main Content */
+    .main-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+    
+    .hero-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1d1d1f 0%, #667eea 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+        margin-bottom: 1rem;
+        line-height: 1.1;
+    }
+    
+    .hero-subtitle {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 400;
+        color: #6d6d70;
+        text-align: center;
+        margin-bottom: 4rem;
+        line-height: 1.4;
+    }
+    
+    /* Question Styling */
+    .question-wrapper {
+        margin: 3rem 0;
+    }
+    
+    .question-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin-bottom: 2rem;
+        text-align: center;
+        line-height: 1.3;
+    }
+    
+    .stRadio > div {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .stRadio > div > label {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem 2rem;
+        width: 100%;
+        max-width: 600px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #1d1d1f;
+    }
+    
+    .stRadio > div > label:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+    
+    .stRadio > div > label > div:first-child {
+        display: none;
+    }
+    
+    /* Primary Button */
+    .primary-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        color: white;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 1rem 3rem;
+        margin: 3rem auto;
+        display: block;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .primary-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+    }
+    
+    /* Progress Bar */
+    .progress-container {
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 25px;
+        height: 8px;
+        margin: 2rem auto;
+        max-width: 400px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        border-radius: 25px;
+        transition: width 0.3s ease;
+    }
+    
+    /* Result Cards */
+    .result-hero {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem;
+        margin: 3rem 0;
+        text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .metric-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .metric-value {
+        font-family: 'Inter', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #8e8e93;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* AI Analysis */
+    .ai-analysis {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem;
+        margin: 3rem 0;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.1);
+    }
+    
+    .ai-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1d1d1f;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .ai-content {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 400;
+        color: #1d1d1f;
+        line-height: 1.6;
+        text-align: center;
+    }
+    
+    /* Asset Cards */
+    .asset-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .asset-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .asset-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .asset-name {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #1d1d1f;
+        margin-bottom: 0.5rem;
+    }
+    
+    .asset-description {
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        font-weight: 400;
+        color: #6d6d70;
+        line-height: 1.5;
         margin-bottom: 1rem;
     }
+    
+    .asset-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    
+    .asset-sector {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #8e8e93;
+    }
+    
+    .asset-percentage {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    /* Investment Input */
+    .investment-section {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem;
+        margin: 3rem 0;
+        text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Portfolio Monitor */
+    .portfolio-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
     .performance-positive {
-        color: #27ae60;
-        font-weight: 600;
+        color: #30d158;
+        font-weight: 700;
     }
+    
     .performance-negative {
-        color: #e74c3c;
-        font-weight: 600;
+        color: #ff453a;
+        font-weight: 700;
     }
-    .ai-analysis {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin: 1rem 0;
-        border-left: 4px solid #3498db;
+    
+    /* Plotly customization */
+    .js-plotly-plot {
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Hide Streamlit elements */
+    .stDeployButton {
+        display: none;
+    }
+    
+    #MainMenu {
+        visibility: hidden;
+    }
+    
+    footer {
+        visibility: hidden;
+    }
+    
+    header {
+        visibility: hidden;
+    }
+    
+    .stNumberInput > div > div > input {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 25px;
+        color: white;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 1rem 3rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        width: 100%;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -483,122 +811,187 @@ def get_claude_analysis(risk_score, portfolio):
     except Exception as e:
         return f"El análisis personalizado no está disponible en este momento. El portafolio ha sido seleccionado usando criterios cuantitativos basados en la teoría moderna de portafolios y su puntuación de riesgo de {risk_score:.1f}/10."
 
+def render_navigation():
+    pages = {
+        "questionnaire": "Evaluación",
+        "results": "Análisis", 
+        "portfolio": "Portafolio"
+    }
+    
+    nav_html = '<div class="nav-container"><div class="nav-content">'
+    
+    for page_key, page_name in pages.items():
+        active_class = "active" if st.session_state.get("page", "questionnaire") == page_key else ""
+        nav_html += f'<button class="nav-item {active_class}" onclick="window.parent.postMessage({{type: \'streamlit:setComponentValue\', value: \'{page_key}\'}}, \'*\')">{page_name}</button>'
+    
+    nav_html += '</div></div>'
+    st.markdown(nav_html, unsafe_allow_html=True)
+
 def page_questionnaire():
-    st.markdown('<h1 class="main-header">Evaluación de Perfil de Riesgo</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Complete el cuestionario para determinar su perfil de inversión óptimo</p>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="main-container">
+        <h1 class="hero-title">Portfolio Intelligence</h1>
+        <p class="hero-subtitle">Descubre tu perfil de inversión ideal a través de nuestro análisis avanzado</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     questionnaire = QuestionnaireSystem()
     answers = {}
     
-    for question in questionnaire.questions:
-        st.markdown(f'<div class="question-card">', unsafe_allow_html=True)
-        st.markdown(f"**Pregunta {question['id']}:** {question['text']}")
-        
-        options = [opt["text"] for opt in question["options"]]
-        selected = st.radio(
-            "Seleccione su respuesta:",
-            options,
-            key=f"q_{question['id']}",
-            index=None
-        )
-        
-        if selected:
-            for opt in question["options"]:
-                if opt["text"] == selected:
-                    answers[question["id"]] = opt["value"]
-                    break
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+    with st.container():
+        for question in questionnaire.questions:
+            st.markdown(f"""
+            <div class="main-container">
+                <div class="question-wrapper">
+                    <div class="question-text">{question['text']}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            options = [opt["text"] for opt in question["options"]]
+            selected = st.radio(
+                "",
+                options,
+                key=f"q_{question['id']}",
+                index=None,
+                label_visibility="collapsed"
+            )
+            
+            if selected:
+                for opt in question["options"]:
+                    if opt["text"] == selected:
+                        answers[question["id"]] = opt["value"]
+                        break
+    
+    progress = len(answers) / len(questionnaire.questions)
+    
+    st.markdown(f"""
+    <div class="main-container">
+        <div class="progress-container">
+            <div class="progress-bar" style="width: {progress * 100}%"></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     if len(answers) == len(questionnaire.questions):
-        if st.button("Analizar Perfil de Riesgo", type="primary", use_container_width=True):
-            risk_score = questionnaire.calculate_risk_score(answers)
-            st.session_state.risk_score = risk_score
-            st.session_state.page = "results"
-            st.rerun()
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button("Analizar Perfil", type="primary", use_container_width=True):
+                risk_score = questionnaire.calculate_risk_score(answers)
+                st.session_state.risk_score = risk_score
+                st.session_state.page = "results"
+                st.rerun()
     else:
-        progress = len(answers) / len(questionnaire.questions)
-        st.progress(progress)
-        st.info(f"Progreso: {len(answers)}/{len(questionnaire.questions)} preguntas completadas")
+        st.markdown(f"""
+        <div class="main-container" style="text-align: center; margin: 3rem 0;">
+            <p style="font-family: 'Inter', sans-serif; font-size: 1.1rem; color: #8e8e93;">
+                Progreso: {len(answers)}/{len(questionnaire.questions)} preguntas completadas
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def page_results():
     if "risk_score" not in st.session_state:
         st.warning("Complete primero el cuestionario de evaluación")
         return
     
-    st.markdown('<h1 class="main-header">Resultado de Evaluación</h1>', unsafe_allow_html=True)
-    
     portfolio_manager = PortfolioManager()
     portfolio = portfolio_manager.get_portfolio_by_risk_score(st.session_state.risk_score)
     
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="main-container">
+        <h1 class="hero-title">Tu Perfil de Inversión</h1>
+        <p class="hero-subtitle">Análisis personalizado basado en inteligencia artificial</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        st.metric("Puntuación de Riesgo", f"{st.session_state.risk_score:.1f}/10")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        st.metric("Portafolio Recomendado", portfolio["name"])
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col3:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        st.metric("Rendimiento Esperado", f"{portfolio['expected_return']}%")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Métricas principales
+    st.markdown(f"""
+    <div class="main-container">
+        <div class="result-hero">
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">{st.session_state.risk_score:.1f}</div>
+                    <div class="metric-label">Puntuación de Riesgo</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{portfolio['expected_return']}%</div>
+                    <div class="metric-label">Rendimiento Esperado</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{portfolio['std_deviation']}%</div>
+                    <div class="metric-label">Volatilidad</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Análisis con IA
-    with st.spinner("Generando análisis personalizado..."):
+    with st.spinner(""):
         claude_analysis = get_claude_analysis(st.session_state.risk_score, portfolio)
         
-        st.markdown('<div class="ai-analysis">', unsafe_allow_html=True)
-        st.subheader("Análisis Personalizado")
-        st.markdown(claude_analysis)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="main-container">
+            <div class="ai-analysis">
+                <div class="ai-title">Recomendación de Experto</div>
+                <div class="ai-content">{claude_analysis}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    st.subheader("Composición del Portafolio")
+    # Composición del portafolio
+    st.markdown(f"""
+    <div class="main-container">
+        <h2 style="font-family: 'Inter', sans-serif; font-size: 2.2rem; font-weight: 700; color: #1d1d1f; text-align: center; margin: 3rem 0 2rem 0;">{portfolio['name']}</h2>
+        <div class="asset-grid">
+    """, unsafe_allow_html=True)
     
     for asset_code, asset_info in portfolio["assets"].items():
-        st.markdown(f'<div class="asset-info">', unsafe_allow_html=True)
-        col1, col2 = st.columns([3, 1])
-        
-        with col1:
-            st.markdown(f"**{asset_info['name']} ({asset_code})**")
-            st.markdown(f"*{asset_info['description']}*")
-            st.markdown(f"Sector: {asset_info['sector']} | Nivel de Riesgo: {asset_info['risk_level']}")
-        
-        with col2:
-            st.metric("Asignación", f"{asset_info['percentage']}%")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class="asset-card">
+                <div class="asset-name">{asset_info['name']} ({asset_code})</div>
+                <div class="asset-description">{asset_info['description']}</div>
+                <div class="asset-meta">
+                    <div class="asset-sector">{asset_info['sector']} • {asset_info['risk_level']}</div>
+                    <div class="asset-percentage">{asset_info['percentage']}%</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
     
-    st.subheader("Configuración de Inversión")
+    st.markdown("</div></div>", unsafe_allow_html=True)
     
-    investment_amount = st.number_input(
-        "Monto a invertir (USD)",
-        min_value=1000,
-        max_value=10000000,
-        value=10000,
-        step=1000,
-        format="%d"
-    )
+    # Configuración de inversión
+    st.markdown("""
+    <div class="main-container">
+        <div class="investment-section">
+            <h3 style="font-family: 'Inter', sans-serif; font-size: 1.8rem; font-weight: 700; color: #1d1d1f; margin-bottom: 2rem;">Configurar Inversión</h3>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    if st.button("Proceder con la Inversión", type="primary", use_container_width=True):
-        st.session_state.investment_amount = investment_amount
-        st.session_state.selected_portfolio = portfolio
-        st.session_state.page = "portfolio"
-        st.rerun()
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        investment_amount = st.number_input(
+            "Monto a invertir (USD)",
+            min_value=1000,
+            max_value=10000000,
+            value=10000,
+            step=1000,
+            format="%d",
+            label_visibility="collapsed"
+        )
+        
+        if st.button("Proceder con el Análisis", type="primary", use_container_width=True):
+            st.session_state.investment_amount = investment_amount
+            st.session_state.selected_portfolio = portfolio
+            st.session_state.page = "portfolio"
+            st.rerun()
 
 def page_portfolio():
     if "selected_portfolio" not in st.session_state:
-        st.warning("Configure primero su portafolio en la sección de resultados")
+        st.warning("Configure primero su portafolio en la sección anterior")
         return
-    
-    st.markdown('<h1 class="main-header">Monitor de Portafolio</h1>', unsafe_allow_html=True)
     
     portfolio = st.session_state.selected_portfolio
     investment_amount = st.session_state.investment_amount
@@ -606,38 +999,48 @@ def page_portfolio():
     
     performance_data = portfolio_manager.generate_performance_data(portfolio)
     
-    # Métricas principales
+    # Cálculos de rendimiento
     current_value = investment_amount * (performance_data["portfolio_values"][-1] / 100)
     total_return = current_value - investment_amount
     total_return_pct = (current_value / investment_amount - 1) * 100
     
-    col1, col2, col3, col4 = st.columns(4)
+    st.markdown("""
+    <div class="main-container portfolio-header">
+        <h1 class="hero-title">Monitor de Portafolio</h1>
+        <p class="hero-subtitle">Seguimiento en tiempo real de su inversión</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col1:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        st.metric("Valor Actual", f"${current_value:,.2f}")
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Métricas principales
+    performance_class = "performance-positive" if total_return_pct >= 0 else "performance-negative"
+    daily_class = "performance-positive" if performance_data["current_portfolio_change"] >= 0 else "performance-negative"
     
-    with col2:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        st.metric("Ganancia/Pérdida", f"${total_return:,.2f}")
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="main-container">
+        <div class="result-hero">
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">${current_value:,.0f}</div>
+                    <div class="metric-label">Valor Actual</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value ${total_return:+,.0f}</div>
+                    <div class="metric-label">Ganancia/Pérdida</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value {performance_class}">{total_return_pct:+.2f}%</div>
+                    <div class="metric-label">Rendimiento Total</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value {daily_class}">{performance_data["current_portfolio_change"]:+.2f}%</div>
+                    <div class="metric-label">Cambio Diario</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col3:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        change_class = "performance-positive" if total_return_pct >= 0 else "performance-negative"
-        st.markdown(f'<div class="{change_class}">Rendimiento Total: {total_return_pct:.2f}%</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-        daily_change_class = "performance-positive" if performance_data["current_portfolio_change"] >= 0 else "performance-negative"
-        st.markdown(f'<div class="{daily_change_class}">Cambio Diario: {performance_data["current_portfolio_change"]:.2f}%</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Gráfico de rendimiento del portafolio
-    st.subheader("Evolución del Portafolio")
-    
+    # Gráfico de evolución
     portfolio_values_scaled = [investment_amount * (val / 100) for val in performance_data["portfolio_values"]]
     
     fig_portfolio = go.Figure()
@@ -645,112 +1048,102 @@ def page_portfolio():
         x=performance_data["dates"],
         y=portfolio_values_scaled,
         mode='lines',
-        name='Valor del Portafolio',
-        line=dict(color='#3498db', width=2)
+        name='Portafolio',
+        line=dict(color='#667eea', width=3),
+        fill='tonexty'
     ))
     
-    fig_portfolio.add_hline(y=investment_amount, line_dash="dash", line_color="gray", 
+    fig_portfolio.add_hline(y=investment_amount, line_dash="dash", line_color="#8e8e93", 
                            annotation_text="Inversión Inicial")
     
     fig_portfolio.update_layout(
-        title="Evolución del Valor del Portafolio",
-        xaxis_title="Fecha",
+        title="Evolución del Portafolio",
+        xaxis_title="",
         yaxis_title="Valor (USD)",
         hovermode='x unified',
         showlegend=False,
-        height=400
+        height=500,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(family="Inter", size=12),
+        title_font=dict(size=20, color="#1d1d1f"),
+        margin=dict(t=60, b=40, l=60, r=40)
     )
+    
+    fig_portfolio.update_xaxes(gridcolor='rgba(0,0,0,0.1)')
+    fig_portfolio.update_yaxes(gridcolor='rgba(0,0,0,0.1)')
     
     st.plotly_chart(fig_portfolio, use_container_width=True)
     
-    # Desglose por activos
+    # Distribución y rendimiento por activos
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Distribución Actual")
-        
+        # Gráfico de distribución
         asset_names = []
         asset_values = []
-        asset_percentages = []
         
         for asset_code, asset_info in portfolio["assets"].items():
             asset_investment = investment_amount * (asset_info["percentage"] / 100)
             current_asset_value = asset_investment * (performance_data["asset_data"][asset_code]["values"][-1] / 100)
             
-            asset_names.append(f"{asset_code}")
+            asset_names.append(asset_code)
             asset_values.append(current_asset_value)
-            asset_percentages.append(asset_info["percentage"])
         
         fig_pie = px.pie(
             values=asset_values,
             names=asset_names,
-            title="Valor por Activo"
+            title="Distribución por Activo"
         )
-        fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+        
+        fig_pie.update_traces(
+            textposition='inside', 
+            textinfo='percent+label',
+            marker=dict(line=dict(color='#FFFFFF', width=2))
+        )
+        
+        fig_pie.update_layout(
+            showlegend=False,
+            height=400,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(family="Inter", size=12),
+            title_font=dict(size=18, color="#1d1d1f")
+        )
+        
         st.plotly_chart(fig_pie, use_container_width=True)
     
     with col2:
-        st.subheader("Rendimiento por Activo")
+        # Rendimiento por activo
+        st.markdown("""
+        <h3 style="font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 700; color: #1d1d1f; margin-bottom: 1.5rem;">Rendimiento por Activo</h3>
+        """, unsafe_allow_html=True)
         
-        asset_performance_data = []
         for asset_code, asset_info in portfolio["assets"].items():
             asset_data = performance_data["asset_data"][asset_code]
             asset_investment = investment_amount * (asset_info["percentage"] / 100)
             current_asset_value = asset_investment * (asset_data["values"][-1] / 100)
             asset_return = current_asset_value - asset_investment
             
-            asset_performance_data.append({
-                "Activo": asset_code,
-                "Inversión": asset_investment,
-                "Valor Actual": current_asset_value,
-                "Ganancia/Pérdida": asset_return,
-                "Rendimiento %": asset_data["ytd_change"],
-                "Cambio Diario %": asset_data["current_change"]
-            })
-        
-        df_performance = pd.DataFrame(asset_performance_data)
-        
-        st.markdown("### Detalle de Rendimientos")
-        for _, row in df_performance.iterrows():
-            with st.expander(f"{row['Activo']} - {portfolio['assets'][row['Activo']]['name']}"):
-                col_a, col_b, col_c = st.columns(3)
+            change_class = "performance-positive" if asset_data["ytd_change"] >= 0 else "performance-negative"
+            
+            with st.expander(f"{asset_code} - {asset_info['name']}", expanded=False):
+                col_a, col_b = st.columns(2)
                 with col_a:
-                    st.metric("Valor Actual", f"${row['Valor Actual']:,.2f}")
+                    st.metric("Valor Actual", f"${current_asset_value:,.0f}")
+                    st.metric("Inversión", f"${asset_investment:,.0f}")
                 with col_b:
-                    st.metric("Ganancia/Pérdida", f"${row['Ganancia/Pérdida']:,.2f}")
-                with col_c:
-                    change_color = "normal" if row['Rendimiento %'] >= 0 else "inverse"
-                    st.metric("Rendimiento", f"{row['Rendimiento %']:.2f}%", 
-                            f"{row['Cambio Diario %']:.2f}% (24h)", delta_color=change_color)
+                    st.metric("Ganancia/Pérdida", f"${asset_return:+,.0f}")
+                    st.metric("Rendimiento", f"{asset_data['ytd_change']:+.2f}%", 
+                            f"{asset_data['current_change']:+.2f}% (24h)")
 
 def main():
-    # Navegación
+    # Inicializar navegación
     if "page" not in st.session_state:
         st.session_state.page = "questionnaire"
     
-    with st.sidebar:
-        st.markdown('<div class="sidebar-nav">', unsafe_allow_html=True)
-        st.markdown("**Sistema de Gestión de Portafolios**")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        pages = {
-            "questionnaire": "1. Evaluación de Riesgo",
-            "results": "2. Resultados y Configuración", 
-            "portfolio": "3. Monitor de Portafolio"
-        }
-        
-        for page_key, page_name in pages.items():
-            if st.button(page_name, use_container_width=True, 
-                        type="primary" if st.session_state.page == page_key else "secondary"):
-                st.session_state.page = page_key
-                st.rerun()
-        
-        st.markdown("---")
-        st.markdown("**Información del Sistema**")
-        st.markdown("Basado en la Teoría Moderna de Portafolios")
-        st.markdown("Análisis cuantitativo de riesgo")
-        st.markdown("Diversificación optimizada")
-        st.markdown("Análisis de IA integrado")
+    # Renderizar navegación
+    render_navigation()
     
     # Renderizar página actual
     if st.session_state.page == "questionnaire":
