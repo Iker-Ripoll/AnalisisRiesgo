@@ -795,10 +795,10 @@ class QuestionnaireSystem:
                 "id": 9,
                 "text": "¿Con qué frecuencia planeas revisar tu portafolio?",
                 "options": [
-                    {"text": "Diariamente", "value": 2},
-                    {"text": "Semanalmente", "value": 4},
-                    {"text": "Mensualmente", "value": 7},
-                    {"text": "Trimestralmente o menos", "value": 10}
+                    {"text": "Semanalmente", "value": 2},
+                    {"text": "Trimestralmente", "value": 4},
+                    {"text": "Semestralmente", "value": 7},
+                    {"text": "Anualmente o menos", "value": 10}
                 ]
             },
             {
